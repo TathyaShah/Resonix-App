@@ -1,0 +1,16 @@
+import { ALL_SONGS, APPEND_SONGS } from "./constant";
+
+const initialState = [];
+
+const allSongsReducer = (state = initialState, action) => {
+    switch (action.type) {
+        case ALL_SONGS:
+            return action.payload;
+        case APPEND_SONGS:
+            return state.concat(action.payload || []);
+        default:
+            return state;
+    }
+};
+
+export default allSongsReducer;
