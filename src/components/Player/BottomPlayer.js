@@ -17,8 +17,10 @@ import {
     useColorScheme,
     Easing
 } from 'react-native';
-const BottomPlayer = ({ nav }) => {
+import { useNavigation } from '@react-navigation/native';
 
+const BottomPlayer = () => {
+    const navigation = useNavigation();
     const dispatch = useDispatch()
     const Songs = useSelector((state) => state.allSongsReducer);
     const selected = useSelector((state) => state.selectedSongReducer);
@@ -67,7 +69,7 @@ const BottomPlayer = ({ nav }) => {
     const rotateAnim = useRef(new Animated.Value(0)).current;
     const shouldRotate = useRef(false);
     const toggleModal = () => {
-        nav.navigate('AudioPlayer');
+        navigation.navigate('AudioPlayer');
     };
 
     useEffect(() => {
@@ -91,6 +93,7 @@ const BottomPlayer = ({ nav }) => {
             const ActiveTrack = await TrackPlayer.getActiveTrack();
             storeSelectedSong(ActiveTrack);
             dispatch(selectedSong(ActiveTrack));
+            updateRecent(ActiveTrack);
         };
 
         const subscription = TrackPlayer.addEventListener('playback-track-changed', onTrackChange);
@@ -101,6 +104,24 @@ const BottomPlayer = ({ nav }) => {
             subscription.remove();
         };
     }, [Songs]);
+
+    const updateRecent = async (song) => {
+        if (!song) return;
+        try {
+            let arr = [];
+            const stored = await AsyncStorage.getItem('recentSongs');
+            if (stored) arr = JSON.parse(stored);
+            // remove duplicate
+            arr = arr.filter(s => s.url !== song.url);
+            arr.unshift(song);
+            if (arr.length > 20) arr.pop();
+            await AsyncStorage.setItem('recentSongs', JSON.stringify(arr));
+        } catch (e) {
+            console.error('Failed to update recent songs', e);
+        }
+    };
+
+
 
     useEffect(() => {
         if (isPlayerReady && selected !== null) {
@@ -210,12 +231,21 @@ const BottomPlayer = ({ nav }) => {
 
 const styles = StyleSheet.create({
     bottomPlayer: {
-        flex: 1,
-        paddingLeft: 13, paddingRight: 22, padding: 10,
-        width: '100%', height: 60, position: 'absolute', bottom: 0, flexDirection: 'row',
-        gap: 10, justifyContent: 'space-between', alignItems: 'center', borderTopColor: '#E82255',
+        // remove flex:1 so it doesn't cover entire screen when absolute
+        paddingLeft: 13,
+        paddingRight: 22,
+        padding: 10,
+        width: '100%',
+        height: 60,
+        position: 'absolute',
+        // raise it above the tab bar (approx. 60px)
+        bottom: 60,
+        flexDirection: 'row',
+        gap: 10,
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        borderTopColor: '#E82255',
         borderTopWidth: 1,
-
     },
     rotateMusicIconContainer: {
         width: 35,

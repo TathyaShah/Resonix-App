@@ -292,6 +292,17 @@ const AudioPlayer = () => {
                     <Animated.View style={[styles.musicIconContainer, { transform: [{ rotate: spin }] }]}>
                         <FontAwesomeIcon icon={faMusic} size={100} color='white' />
                     </Animated.View>
+                    {/* lyrics placeholder */}
+                    <View style={{ marginTop: 20, paddingHorizontal: 20, height: 60, justifyContent: 'center' }}>
+                        <Text style={{ color: themeColor, textAlign: 'center' }} numberOfLines={2}>
+                            {/* in a real implementation, lyrics would sync with song playback */}
+                            {selected && selected.title ? `Lyrics not available for "${selected.title}"` : 'Lyrics will be shown here'}
+                        </Text>
+                    </View>
+                    {/* wave strip placeholder */}
+                    <View style={{ height: 30, backgroundColor: isDarkMode ? '#222' : '#eee', marginVertical: 10, borderRadius: 4 }}>
+                        {/* future: animated wave based on beat */}
+                    </View>
                     <View style={{ marginTop: 40, flexDirection: 'column', gap: 5, width: '100%' }}>
                         <Slider
                             style={{ width: '100%' }}

@@ -50,6 +50,8 @@ const SearchMusic = () => {
     const isDarkMode = useColorScheme() === 'dark';
     const [searchQuery, setSearchQuery] = useState('');
     const [showNoResults, setShowNoResults] = useState();
+    const [filterType, setFilterType] = useState('Songs');
+    const [history, setHistory] = useState([]);
     const backgroundStyle = {
         backgroundColor: isDarkMode ? Colors.black : Colors.white,
     };
@@ -70,13 +72,28 @@ const SearchMusic = () => {
     const handleSearch = (text) => {
         setSearchQuery(text);
 
-        const filteredSongs = Songs.filter((song) =>
-            song.title.toLowerCase().includes(text.toLowerCase()) ||
-            song.artist.toLowerCase().includes(text.toLowerCase()) ||
-            song.album.toLowerCase().includes(text.toLowerCase())
-        );
+        let filteredSongs = [];
+        const lower = text.toLowerCase();
+        if (filterType === 'Artist') {
+            filteredSongs = Songs.filter(song => song.artist.toLowerCase().includes(lower));
+        } else if (filterType === 'Album') {
+            filteredSongs = Songs.filter(song => song.album.toLowerCase().includes(lower));
+        } else {
+            // Songs or default
+            filteredSongs = Songs.filter(
+                song =>
+                    song.title.toLowerCase().includes(lower) ||
+                    song.artist.toLowerCase().includes(lower) ||
+                    song.album.toLowerCase().includes(lower)
+            );
+        }
 
-        setfilterSongs(filteredSongs)
+        // Hide currently playing song from the in-list search result to avoid duplicate display
+        if (selectedItem && selectedItem.url) {
+            filteredSongs = filteredSongs.filter(song => song.url !== selectedItem.url);
+        }
+
+        setfilterSongs(filteredSongs);
         setShowNoResults(filteredSongs.length === 0);
     };
 
@@ -86,7 +103,61 @@ const SearchMusic = () => {
         setShowNoResults();
     };
     const closeSearch = () => {
-        navigation.goBack();
+        if (navigation.canGoBack && navigation.canGoBack()) {
+            navigation.goBack();
+        }
+    };
+
+    const saveHistory = async (term) => {
+        if (!term) return;
+        try {
+            let arr = [...history];
+            if (!arr.includes(term)) {
+                arr.unshift(term);
+                if (arr.length > 10) arr.pop();
+                setHistory(arr);
+                await AsyncStorage.setItem('searchHistory', JSON.stringify(arr));
+            }
+        } catch (e) {
+            console.error(e);
+        }
+    };
+
+    const removeHistoryItem = async (term) => {
+        if (!term) return;
+        try {
+            const arr = history.filter(item => item !== term);
+            setHistory(arr);
+            await AsyncStorage.setItem('searchHistory', JSON.stringify(arr));
+        } catch (e) {
+            console.error(e);
+        }
+    };
+
+    useEffect(() => {
+        const loadHistory = async () => {
+            try {
+                const h = await AsyncStorage.getItem('searchHistory');
+                if (h) setHistory(JSON.parse(h));
+            } catch (e) {
+                console.error(e);
+            }
+        };
+        loadHistory();
+    }, []);
+
+    const updateRecent = async (song) => {
+        try {
+            let arr = [];
+            const stored = await AsyncStorage.getItem('recentSongs');
+            if (stored) arr = JSON.parse(stored);
+            arr = arr.filter(s => s.url !== song.url);
+            arr.unshift(song);
+            if (arr.length > 20) arr.pop();
+            await AsyncStorage.setItem('recentSongs', JSON.stringify(arr));
+        } catch (e) {
+            console.error('recent update error', e);
+        }
     };
 
     const handleSongItem = async (item) => {
@@ -98,6 +169,7 @@ const SearchMusic = () => {
           storeSelectedSong(item);
           await TrackPlayer.play();
           dispatch(setIsSongPlaying(true));
+          updateRecent(item);
         }
     
     
@@ -354,9 +426,12 @@ const SearchMusic = () => {
                     style={{ flex: 1, padding: 8, backgroundColor: 'transparent' }}
                     placeholder="Search song, artist, album"
                     placeholderTextColor="#999"
-                    onChangeText={handleSearch}
+                    onChangeText={(text) => {
+                        handleSearch(text);
+                    }}
                     value={searchQuery}
                     cursorColor={'#E82255'}
+                    onSubmitEditing={() => saveHistory(searchQuery.trim())}
                 />
                 {searchQuery !== '' && (
                     <TouchableOpacity onPress={clearSearch} style={{ padding: 8 }}>
@@ -367,6 +442,40 @@ const SearchMusic = () => {
                     <Text style={{ color: 'lightgreen' }}>Cancel</Text>
                 </TouchableOpacity>
             </View>
+            {/* filter chips */}
+            <View style={{ flexDirection: 'row', paddingHorizontal: 15, paddingVertical: 10 }}>
+                {['Songs', 'Artist', 'Album', 'Playlist'].map((type) => (
+                    <TouchableOpacity
+                        key={type}
+                        style={{
+                            paddingHorizontal: 12,
+                            paddingVertical: 6,
+                            borderRadius: 16,
+                            backgroundColor: filterType === type ? '#E82255' : '#eee',
+                            marginRight: 8,
+                        }}
+                        onPress={() => setFilterType(type)}
+                    >
+                        <Text style={{ color: filterType === type ? '#fff' : '#333', fontSize: 12 }}>{type}</Text>
+                    </TouchableOpacity>
+                ))}
+            </View>
+            {/* show history if nothing typed */}
+            {searchQuery === '' && history.length > 0 && (
+                <View style={{ paddingHorizontal: 15, paddingVertical: 10 }}>
+                    <Text style={{ color: themeColor, marginBottom: 5 }}>Recent searches</Text>
+                    {history.map((term, idx) => (
+                        <View key={idx} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 2 }}>
+                            <TouchableOpacity style={{ flex: 1 }} onPress={() => { handleSearch(term); setSearchQuery(term); }}>
+                                <Text style={{ color: '#E82255' }}>{term}</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity onPress={() => removeHistoryItem(term)} style={{ padding: 4 }}>
+                                <FontAwesomeIcon icon={faTimes} size={14} color="#999" />
+                            </TouchableOpacity>
+                        </View>
+                    ))}
+                </View>
+            )}
 
 
             <FlatList

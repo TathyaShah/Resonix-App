@@ -21,6 +21,8 @@ import SearchMusic from './src/components/Audio_screens/AudioSearch';
 import AudioPlayer from './src/components/Player/AudioPlayer';
 import ArtisBasedSongs from './src/components/Audio_screens/artistBasedSongs';
 import AlbumSongs from './src/components/Audio_screens/albumSong';
+import PlaylistDetail from './src/components/Tab_screens/PlaylistDetail';
+import RecentHistory from './src/components/RecentHistory';
 
 const Stack = createStackNavigator();
 export const AppContext = createContext();
@@ -206,10 +208,25 @@ const App = () => {
                 ...TransitionPresets.SlideFromRightIOS,
               }}
             />
-         
-          <Stack.Screen
+            <Stack.Screen
               name="albumbasesongs"
               component={AlbumSongs}
+              options={{
+                headerShown: false,
+                ...TransitionPresets.SlideFromRightIOS,
+              }}
+            />
+            <Stack.Screen
+              name="PlaylistDetail"
+              component={PlaylistDetail}
+              options={{
+                headerShown: false,
+                ...TransitionPresets.SlideFromRightIOS,
+              }}
+            />
+            <Stack.Screen
+              name="RecentHistory"
+              component={RecentHistory}
               options={{
                 headerShown: false,
                 ...TransitionPresets.SlideFromRightIOS,

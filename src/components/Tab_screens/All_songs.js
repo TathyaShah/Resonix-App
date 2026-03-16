@@ -113,6 +113,20 @@ const All_songs = (props) => {
 
 
 
+  const updateRecent = async (song) => {
+    try {
+      let arr = [];
+      const stored = await AsyncStorage.getItem('recentSongs');
+      if (stored) arr = JSON.parse(stored);
+      arr = arr.filter(s => s.url !== song.url);
+      arr.unshift(song);
+      if (arr.length > 20) arr.pop();
+      await AsyncStorage.setItem('recentSongs', JSON.stringify(arr));
+    } catch (e) {
+      console.error('recent update error', e);
+    }
+  };
+
   const handleSongItem = async (item) => {
     setOptionModalVisible(false)
     if (selectedItem && selectedItem.url === item.url && isSongPlaying) {
@@ -123,7 +137,7 @@ const All_songs = (props) => {
       storeSelectedSong(item);
       dispatch(setIsSongPlaying(true));
       await TrackPlayer.play();
-     
+      updateRecent(item);
     }
 
   }
