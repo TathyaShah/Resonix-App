@@ -1,9 +1,11 @@
 import React from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, useColorScheme } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
+import useTheme from '../../hooks/useTheme';
 
 // simple placeholder listing playlists; favorites included
 const Playlists = ({ navigation }) => {
-  const isDark = useColorScheme() === 'dark';
+  const { isDarkMode } = useTheme();
+  const isDark = isDarkMode;
   const dummy = [
     { id: 'fav', name: 'Favorites' },
     { id: '1', name: 'Workout' },

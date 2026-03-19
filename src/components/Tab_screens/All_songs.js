@@ -7,10 +7,10 @@ import {
   ToastAndroid,
   TouchableOpacity,
   View,
-  useColorScheme,
   Modal,
   Pressable, TouchableWithoutFeedback, PanResponder, PermissionsAndroid
 } from 'react-native';
+import useTheme from '../../hooks/useTheme';
 import { Colors } from 'react-native/Libraries/NewAppScreen';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import {
@@ -34,7 +34,7 @@ const All_songs = (props) => {
   const selectedItem = useSelector((state) => state.selectedSongReducer);
   const isSongPlaying = useSelector((state) => state.isSongPlaying);
 
-  const isDarkMode = useColorScheme() === 'dark';
+  const { isDarkMode } = useTheme();
   const [songsCount, setSongsCount] = useState(0);
   const [songItem, setSongItem] = useState();
   const themeColor = isDarkMode ? Colors.white : Colors.black;

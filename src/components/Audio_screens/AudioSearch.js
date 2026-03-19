@@ -4,7 +4,7 @@ import {
     View,
     TextInput,
     Text, StyleSheet,
-    FlatList, useColorScheme,
+    FlatList,
     Modal,
     Pressable,
     TouchableWithoutFeedback,
@@ -30,6 +30,7 @@ import { selectedSong, setIsSongPlaying, setFavouritesSongs } from '../../redux/
 import TrackPlayer from 'react-native-track-player';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AppContext } from '../../../App';
+import useTheme from '../../hooks/useTheme';
 import Share from 'react-native-share';
 import RNFS from 'react-native-fs';
 const SearchMusic = () => {
@@ -47,7 +48,7 @@ const SearchMusic = () => {
     const [openDeleteSongmodal, setOpenDeleteSongmodal] = useState(false);
 
 
-    const isDarkMode = useColorScheme() === 'dark';
+    const { isDarkMode } = useTheme();
     const [searchQuery, setSearchQuery] = useState('');
     const [showNoResults, setShowNoResults] = useState();
     const [filterType, setFilterType] = useState('Songs');

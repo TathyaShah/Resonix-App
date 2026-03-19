@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, useColorScheme, TouchableOpacity, } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, } from 'react-native';
+import useTheme from '../../hooks/useTheme';
 import { useSelector } from 'react-redux';
 import { Colors } from 'react-native/Libraries/NewAppScreen';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
@@ -8,7 +9,7 @@ const Album = ({ navigation }) => {
     const Songs = useSelector((state) => state.allSongsReducer);
     const [albumSong, setalbumSong] = useState([]);
     const [albumCount, setalbumCount] = useState(0);
-    const isDarkMode = useColorScheme() === 'dark';
+    const { isDarkMode } = useTheme();
 
     const themeColor = isDarkMode ? Colors.white : Colors.black;
     useEffect(() => {

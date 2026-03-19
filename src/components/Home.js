@@ -6,8 +6,8 @@ import {
   TouchableOpacity,
   Image,
   StyleSheet,
-  useColorScheme,
 } from 'react-native';
+import useTheme from '../hooks/useTheme';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import { useDispatch } from 'react-redux';
@@ -19,7 +19,8 @@ const Home = () => {
   const [recent, setRecent] = useState([]);
   const navigation = useNavigation();
   const dispatch = useDispatch();
-  const isDark = useColorScheme() === 'dark';
+  const { isDarkMode } = useTheme();
+  const isDark = isDarkMode;
 
   useEffect(() => {
     const load = async () => {

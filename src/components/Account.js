@@ -1,20 +1,21 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   TextInput,
   TouchableOpacity,
-  useColorScheme,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
+import { AppContext } from '../../App';
 
 const Account = () => {
   const [name, setName] = useState('');
-  const [theme, setTheme] = useState('system');
+  const [localTheme, setLocalTheme] = useState('system');
   const navigation = useNavigation();
-  const isDarkMode = useColorScheme() === 'dark';
+  const { appTheme, setAppTheme, isDarkMode } = useContext(AppContext);
+  const theme = appTheme || localTheme;
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -22,13 +23,16 @@ const Account = () => {
         const storedName = await AsyncStorage.getItem('profileName');
         if (storedName) setName(storedName);
         const storedTheme = await AsyncStorage.getItem('appTheme');
-        if (storedTheme) setTheme(storedTheme);
+        if (storedTheme) {
+          setLocalTheme(storedTheme);
+          if (setAppTheme) setAppTheme(storedTheme);
+        }
       } catch (e) {
         console.error(e);
       }
     };
     loadProfile();
-  }, []);
+  }, [setAppTheme]);
 
   const saveName = async () => {
     try {
@@ -40,7 +44,8 @@ const Account = () => {
 
   const changeTheme = async (t) => {
     try {
-        setTheme(t);
+        setLocalTheme(t);
+        if (setAppTheme) setAppTheme(t);
         await AsyncStorage.setItem('appTheme', t);
     } catch (e) {
         console.error(e);

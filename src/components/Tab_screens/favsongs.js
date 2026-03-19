@@ -4,11 +4,11 @@ import {
   TouchableOpacity,
   View,
   StyleSheet,
-  useColorScheme,
   FlatList,
   ToastAndroid,
   Modal, TouchableWithoutFeedback, Pressable
 } from 'react-native';
+import useTheme from '../../hooks/useTheme';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import { Colors } from 'react-native/Libraries/NewAppScreen';
 import { faEllipsisVertical, faMusic, faPlay } from '@fortawesome/free-solid-svg-icons';
@@ -23,7 +23,7 @@ const FavSongs = ({ navigation }) => {
   const selectedItem = useSelector((state) => state.selectedSongReducer);
   const favSongs = useSelector((state) => state.favSongsReducer);
   const isSongPlaying = useSelector((state) => state.isSongPlaying);
-  const isDarkMode = useColorScheme() === 'dark';
+  const { isDarkMode } = useTheme();
   const [rmSongItem, setrmSongItem] = useState();
   const themeColor = isDarkMode ? Colors.white : Colors.black;
   const bgTheme = isDarkMode ? Colors.black : Colors.white;

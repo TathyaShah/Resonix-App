@@ -1,9 +1,11 @@
 import React from 'react';
-import { View, Text, StyleSheet, FlatList, useColorScheme } from 'react-native';
+import { View, Text, StyleSheet, FlatList } from 'react-native';
+import useTheme from '../../hooks/useTheme';
 
 const PlaylistDetail = ({ route }) => {
   const { playlist } = route.params || {};
-  const isDark = useColorScheme() === 'dark';
+  const { isDarkMode } = useTheme();
+  const isDark = isDarkMode;
   // dummy songs
   const songs = playlist && playlist.id === 'fav' ? [] : [];
 

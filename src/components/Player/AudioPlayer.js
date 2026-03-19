@@ -5,7 +5,6 @@ import {
     StyleSheet,
     Text,
     Dimensions,
-    useColorScheme,
     TouchableOpacity,
     ToastAndroid,
     StatusBar, PanResponder, Platform
@@ -14,6 +13,7 @@ import { Colors } from 'react-native/Libraries/NewAppScreen';
 import LinearGradient from 'react-native-linear-gradient';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import { useDispatch, useSelector } from 'react-redux'
+import useTheme from '../../hooks/useTheme';
 import { setIsSongPlaying, setFavouritesSongs } from '../../redux/action';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import TrackPlayer, {} from 'react-native-track-player';
@@ -40,7 +40,7 @@ const AudioPlayer = () => {
     const [duration, setDuration] = useState(0);
     const [playerInitialized, setPlayerInitialized] = useState(false);
     const navigation = useNavigation();
-    const isDarkMode = useColorScheme() === 'dark';
+    const { isDarkMode } = useTheme();
     const [isFavSong, setFavSong] = useState(false);
 
     const ensurePlayerInitialized = async () => {

@@ -6,15 +6,15 @@ import {
   TouchableOpacity,
   Image,
   StyleSheet,
-  useColorScheme,
   ToastAndroid,
 } from 'react-native';
+import useTheme from '../hooks/useTheme';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useDispatch, useSelector } from 'react-redux';
 import { selectedSong, setIsSongPlaying, setFavouritesSongs } from '../redux/action';
 import TrackPlayer from 'react-native-track-player';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import { faPlay, faPause, faForwardStep, faHeart as faHeartSolid } from '@fortawesome/free-solid-svg-icons';
+import { faPlay, faPause, faForwardStep, faTimes, faHeart as faHeartSolid } from '@fortawesome/free-solid-svg-icons';
 import { faHeart as faHeartRegular } from '@fortawesome/free-regular-svg-icons';
 import { useNavigation } from '@react-navigation/native';
 import BottomPlayer from './Player/BottomPlayer';
@@ -25,7 +25,8 @@ const RecentHistory = () => {
   const dispatch = useDispatch();
   const selected = useSelector(state => state.selectedSongReducer);
   const isPlaying = useSelector(state => state.isSongPlaying);
-  const isDark = useColorScheme() === 'dark';
+  const { isDarkMode } = useTheme();
+  const isDark = isDarkMode;
   const navigation = useNavigation();
 
   const load = async () => {
@@ -64,6 +65,16 @@ const RecentHistory = () => {
     if (arr.length > 50) arr = arr.slice(0, 50);
     setRecent(arr);
     AsyncStorage.setItem('recentSongs', JSON.stringify(arr)).catch(() => {});
+  };
+
+  const removeRecentItem = async (item) => {
+    try {
+      const updated = recent.filter(song => song.url !== item.url);
+      setRecent(updated);
+      await AsyncStorage.setItem('recentSongs', JSON.stringify(updated));
+    } catch (e) {
+      console.error('Failed to remove recent item', e);
+    }
   };
 
   const togglePause = async (item) => {
@@ -126,12 +137,15 @@ const RecentHistory = () => {
             </Text>
           </View>
         </View>
-        <View style={styles.controls}>
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
           <TouchableOpacity onPress={() => togglePause(item)} style={styles.controlBtn}>
             <FontAwesomeIcon icon={isThisPlaying ? faPause : faPlay} size={18} color={isDark ? '#fff' : '#000'} />
           </TouchableOpacity>
           <TouchableOpacity onPress={() => addFavSongItem(item)} style={styles.controlBtn}>
             <FontAwesomeIcon icon={isFav ? faHeartSolid : faHeartRegular} size={18} color={isDark ? '#fff' : '#000'} />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => removeRecentItem(item)} style={[styles.controlBtn, { marginLeft: 8 }]}> 
+            <FontAwesomeIcon icon={faTimes} size={18} color={isDark ? '#fff' : '#000'} />
           </TouchableOpacity>
         </View>
       </TouchableOpacity>

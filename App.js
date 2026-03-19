@@ -1,5 +1,5 @@
 
-import React, { useEffect, createContext, } from 'react';
+import React, { useEffect, createContext, useState } from 'react';
 import SplashScreen from 'react-native-splash-screen';
 import { DefaultTheme, DarkTheme, NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator, TransitionPresets } from '@react-navigation/stack';
@@ -27,17 +27,31 @@ import RecentHistory from './src/components/RecentHistory';
 const Stack = createStackNavigator();
 export const AppContext = createContext();
 const App = () => {
+  const systemColorScheme = useColorScheme();
+  const [appTheme, setAppTheme] = useState('system');
 
-  const isDarkMode = useColorScheme() === 'dark';
+  const isDarkMode = appTheme === 'system' ? systemColorScheme === 'dark' : appTheme === 'dark';
   const theme = isDarkMode ? DarkTheme : DefaultTheme;
+  const effectiveTheme = isDarkMode ? 'dark' : 'light';
 
   const dispatch = useDispatch()
   useEffect(() => {
     setTimeout(() => {
       SplashScreen.hide();
     }, 500);
-  })
+  });
 
+  useEffect(() => {
+    const loadTheme = async () => {
+      try {
+        const storedTheme = await AsyncStorage.getItem('appTheme');
+        if (storedTheme) setAppTheme(storedTheme);
+      } catch (e) {
+        console.error('Failed to load theme', e);
+      }
+    };
+    loadTheme();
+  }, []);
 
   useEffect(() => {
     const initializePlayer = async () => {
@@ -132,7 +146,7 @@ const App = () => {
   const fetechAllSongs = async () => {
     await getAll({
       // Use a large finite integer instead of Infinity to avoid native bridge errors
-      limit: 10,
+      limit: 200,
     })
       .then((filesOrError) => {
         if (typeof filesOrError === 'string') {
@@ -151,8 +165,8 @@ const App = () => {
 
 
   return (
-    <AppContext.Provider value={{ fetechAllSongs }}>
-      <View style={{ flex: 1, }}>
+    <AppContext.Provider value={{ fetechAllSongs, appTheme, setAppTheme, effectiveTheme, isDarkMode }}>
+      <View style={{ flex: 1, backgroundColor: isDarkMode ? '#000' : '#fff' }}>
         <StatusBar translucent backgroundColor="transparent"
           barStyle={isDarkMode ? 'light-content' : 'dark-content'}
         />

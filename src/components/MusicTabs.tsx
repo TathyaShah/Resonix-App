@@ -5,13 +5,14 @@ import Artist from './Tab_screens/Artist';
 import All_songs from './Tab_screens/All_songs';
 import FavSongs from './Tab_screens/favsongs';
 import Playlists from './Tab_screens/Playlists';
-import { StyleSheet, useColorScheme, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import useTheme from '../hooks/useTheme';
 import { Colors } from 'react-native/Libraries/NewAppScreen';
 
 const TopTab = createMaterialTopTabNavigator();
 
 const MusicTabs = () => {
-  const isDarkMode = useColorScheme() === 'dark';
+  const { isDarkMode } = useTheme();
   return (
     <View style={{ flex: 1, backgroundColor: isDarkMode ? Colors.black : Colors.white }}>
       <TopTab.Navigator

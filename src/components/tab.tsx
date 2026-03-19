@@ -17,8 +17,8 @@ import {
     Text,
     TouchableOpacity,
     View,
-    useColorScheme,
 } from 'react-native';
+import useTheme from '../hooks/useTheme';
 import {
     Colors
 } from 'react-native/Libraries/NewAppScreen';
@@ -27,7 +27,7 @@ import { faSearch, faPlay, faHome, faUser, faMusic } from '@fortawesome/free-sol
 const Tab = createBottomTabNavigator();
 
 const TabNavigator = () => {
-    const isDarkMode = useColorScheme() === 'dark';
+    const { isDarkMode } = useTheme();
     const navigation = useNavigation();
     return (
         <View style={{ flex: 1, backgroundColor: isDarkMode ? Colors.black : Colors.white }}>

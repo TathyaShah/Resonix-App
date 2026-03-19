@@ -7,10 +7,10 @@ import {
     ToastAndroid,
     TouchableOpacity,
     View,
-    useColorScheme,
     TextInput,
     StatusBar
 } from 'react-native';
+import useTheme from '../../hooks/useTheme';
 import { Colors } from 'react-native/Libraries/NewAppScreen';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import {
@@ -25,7 +25,7 @@ import { faHeart as solidHeart } from '@fortawesome/free-solid-svg-icons';
 import { faHeart as regularHeart } from '@fortawesome/free-regular-svg-icons';
 
 const AddToFavourites = (props) => {
-    const isDarkMode = useColorScheme() === 'dark';
+    const { isDarkMode } = useTheme();
     const dispatch = useDispatch()
     const Songs = useSelector((state) => state.allSongsReducer);
     const favSongs = useSelector((state) => state.favSongsReducer);

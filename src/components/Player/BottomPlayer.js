@@ -14,9 +14,9 @@ import {
     Text,
     TouchableOpacity,
     View,
-    useColorScheme,
     Easing
 } from 'react-native';
+import useTheme from '../../hooks/useTheme';
 import { useNavigation } from '@react-navigation/native';
 
 const BottomPlayer = () => {
@@ -26,7 +26,7 @@ const BottomPlayer = () => {
     const selected = useSelector((state) => state.selectedSongReducer);
     const isSongPlaying = useSelector((state) => state.isSongPlaying);
     //theme 
-    const isDarkMode = useColorScheme() === 'dark';
+    const { isDarkMode } = useTheme();
     const themeColor = isDarkMode ? Colors.white : Colors.black;
     const bgTheme = isDarkMode ? Colors.black : Colors.white;
     const dimColorTheme = isDarkMode ? Colors.light : Colors.darker;
