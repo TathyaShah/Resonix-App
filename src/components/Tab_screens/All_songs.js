@@ -10,6 +10,7 @@ import {
   Modal,
   Pressable, TouchableWithoutFeedback, PanResponder, PermissionsAndroid
 } from 'react-native';
+import TextTicker from 'react-native-text-ticker';
 import useTheme from '../../hooks/useTheme';
 import { Colors } from 'react-native/Libraries/NewAppScreen';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
@@ -368,7 +369,7 @@ const All_songs = (props) => {
     const isSelected = selectedItem && selectedItem.url === item.url;
     return (
       <View style={{ marginTop: 4, marginBottom: 10, paddingLeft: 5, paddingRight: 5 }}>
-        <View style={[, { flexDirection: 'row', gap: 5, padding: 8, alignItems: 'center', justifyContent: 'space-between' }]}>
+        <View style={[, { flexDirection: 'row', gap: 5, padding: 8, alignItems: 'center', justifyContent: 'space-between', minHeight: 50 }]}>
           <TouchableOpacity
             style={{ flexDirection: 'row', gap: 10, alignItems: 'center', flex: 1 }}
             onPress={() => handleSongItem(item)} onLongPress={() => openBottomSheet(item)}
@@ -376,13 +377,29 @@ const All_songs = (props) => {
             <View style={[styles.musicIconContainer, { backgroundColor: '#E82255' }]}>
               <FontAwesomeIcon icon={faMusic} size={18} color={'white'} />
             </View>
-            <View style={{ flexDirection: 'column', gap: 5, alignContent: 'center', width: 220 }}>
-              <Text style={[styles.songName, { color: isSelected ? '#E82255' : themeColor }]} numberOfLines={1} ellipsizeMode="tail">{item.title}</Text>
-              <View style={[styles.songInfo, { flexDirection: 'row', gap: 4, alignItems: 'center' }]}>
-                <Text style={{ color: isSelected ? '#E82255' : dimColorTheme, fontSize: 10 }}>{item.artist}</Text>
-                <Text style={{ color: isSelected ? '#E82255' : dimColorTheme, fontSize: 10 }}>-</Text>
-                <Text style={{ color: isSelected ? '#E82255' : dimColorTheme, fontSize: 10 }}>{item.album}</Text>
-              </View>
+            <View style={{ flex: 1, alignContent: 'center', justifyContent: 'center', minWidth: 0 }}>
+              <Text style={[styles.songName, { color: isSelected ? '#E82255' : themeColor }]} numberOfLines={1} ellipsizeMode="tail">
+                {item.title}
+              </Text>
+              {isSelected ? (
+                <TextTicker
+                  style={[styles.songInfoText, { color: dimColorTheme }]}
+                  duration={12000}
+                  loop
+                  bounce={false}
+                  repeatSpacer={80}
+                  marqueeDelay={1200}
+                  scrollSpeed={20}
+                  useNativeDriver
+                  numberOfLines={1}
+                >
+                  {`${item.artist || 'Unknown Artist'}  -  ${item.album || 'Unknown Album'}${item.genre ? '  -  ' + item.genre : ''}`}
+                </TextTicker>
+              ) : (
+                <Text style={[styles.songInfoText, { color: dimColorTheme }]} numberOfLines={1} ellipsizeMode="tail">
+                  {`${item.artist || 'Unknown Artist'} - ${item.album || 'Unknown Album'}${item.genre ? ' - ' + item.genre : ''}`}
+                </Text>
+              )}
             </View>
           </TouchableOpacity>
           <TouchableOpacity style={{ padding: 8, borderRadius: 25 }} onPress={() => openBottomSheet(item)}>
@@ -672,6 +689,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center'
   },
 
+  songName: {
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  songInfoText: {
+    fontSize: 12,
+    marginTop: 2,
+  },
   songInfo: {
 
   }
