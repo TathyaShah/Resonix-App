@@ -397,11 +397,9 @@ const SearchMusic = () => {
                         </View>
                         <View style={{ flexDirection: 'column', gap: 5, alignContent: 'center', width: 220 }}>
                             <Text style={[styles.songName, { color: isSelected ? '#E82255' : themeColor }]} numberOfLines={1} ellipsizeMode="tail">{item.title}</Text>
-                            <View style={[styles.songInfo, { flexDirection: 'row', gap: 4, alignItems: 'center' }]}>
-                                <Text style={{ color: isSelected ? '#E82255' : dimColorTheme, fontSize: 10 }}>{item.artist}</Text>
-                                <Text style={{ color: isSelected ? '#E82255' : dimColorTheme, fontSize: 10 }}>-</Text>
-                                <Text style={{ color: isSelected ? '#E82255' : dimColorTheme, fontSize: 10 }}>{item.album}</Text>
-                            </View>
+                            <Text style={[styles.songInfo, { color: isSelected ? '#E82255' : dimColorTheme, fontSize: 10 }]} numberOfLines={1} ellipsizeMode="tail">
+                                {`${item.artist || 'Unknown Artist'} - ${item.album || 'Unknown Album'}`}
+                            </Text>
                         </View>
                     </TouchableOpacity>
 

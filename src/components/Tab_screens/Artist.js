@@ -42,7 +42,7 @@ const Artist = ({ navigation }) => {
                         paddingBottom: 15,
                         paddingTop: 15
                     }}>
-                        <Text style={{ color: themeColor,textTransform:'capitalize' }}>{item}</Text>
+                        <Text style={{ color: themeColor,textTransform:'capitalize' }} numberOfLines={1} ellipsizeMode='tail'>{item}</Text>
                         <FontAwesomeIcon icon={faAngleRight} size={16} style={{ color: 'grey' }} />
                     </TouchableOpacity>
                 )}

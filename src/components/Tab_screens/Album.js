@@ -49,7 +49,7 @@ const Album = ({ navigation }) => {
                     }}
                         >
                         <FontAwesomeIcon icon={faFolder} size={18} style={{ color: 'lightgreen' }} />
-                        <Text style={{ color: themeColor, textTransform: 'capitalize' }}>{item}</Text>
+                        <Text style={{ color: themeColor, textTransform: 'capitalize' }} numberOfLines={1} ellipsizeMode='tail'>{item}</Text>
                         </View>
                         <FontAwesomeIcon icon={faAngleRight} size={16} style={{ color: 'grey' }} />
                     </TouchableOpacity>
