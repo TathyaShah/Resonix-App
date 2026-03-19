@@ -71,9 +71,30 @@ const Home = () => {
     );
   };
 
+  const moods = [
+    { key: 'happy', label: 'Happy', emoji: '😄' },
+    { key: 'sad', label: 'Sad', emoji: '😢' },
+    { key: 'energetic', label: 'Energetic', emoji: '⚡' },
+    { key: 'love', label: 'Love', emoji: '❤️' },
+  ];
+
   return (
     <View style={{ flex: 1, backgroundColor: isDark ? '#000' : '#fff' }}>
-      <View style={styles.header}>
+      <View style={{ paddingHorizontal: 15, paddingTop: 15 }}>
+        <Text style={[styles.sectionTitle, { color: isDark ? '#fff' : '#000' }]}>What&apos;s your mood?</Text>
+        <View style={styles.moodGrid}>
+          {moods.map((mood) => (
+            <TouchableOpacity key={mood.key} style={[styles.moodCard, { backgroundColor: isDark ? '#1E1E1E' : '#F2F2F2' }]}
+              activeOpacity={0.85}
+            >
+              <Text style={styles.moodEmoji}>{mood.emoji}</Text>
+              <Text style={[styles.moodLabel, { color: isDark ? '#fff' : '#111' }]}>{mood.label}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </View>
+
+      <View style={[styles.header, { marginTop: 2 }]}> 
         <Text style={[styles.headerText, { color: isDark ? '#fff' : '#000' }]}>Recently Played</Text>
         <TouchableOpacity onPress={() => navigation.navigate('RecentHistory')}>
           <Text style={{ color: '#E82255' }}>Show All</Text>
@@ -99,6 +120,36 @@ const styles = StyleSheet.create({
     padding: 15,
   },
   headerText: { fontSize: 18, fontWeight: 'bold' },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  moodGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    marginBottom: 4,
+  },
+  moodCard: {
+    width: '48%',
+    aspectRatio: 5 / 3,
+    maxHeight: 110,
+    borderRadius: 10,
+    padding: 8,
+    marginBottom: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+  },
+  moodEmoji: {
+    fontSize: 24,
+    marginRight: 8,
+  },
+  moodLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
   card: { width: 100, marginRight: 12 },
   thumb: { width: 100, height: 100, backgroundColor: '#444', borderRadius: 6 },
   title: { marginTop: 6, fontSize: 12 },
