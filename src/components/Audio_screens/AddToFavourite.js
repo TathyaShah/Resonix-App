@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useContext } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
     FlatList,
     SafeAreaView,
@@ -8,9 +8,11 @@ import {
     TouchableOpacity,
     View,
     TextInput,
-    StatusBar
+    StatusBar,
+    Platform,
 } from 'react-native';
 import useTheme from '../../hooks/useTheme';
+import useResonixTheme from '../../hooks/useResonixTheme';
 import { Colors } from 'react-native/Libraries/NewAppScreen';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import {
@@ -26,6 +28,7 @@ import { faHeart as regularHeart } from '@fortawesome/free-regular-svg-icons';
 
 const AddToFavourites = (props) => {
     const { isDarkMode } = useTheme();
+    const palette = useResonixTheme();
     const dispatch = useDispatch()
     const Songs = useSelector((state) => state.allSongsReducer);
     const favSongs = useSelector((state) => state.favSongsReducer);
@@ -33,7 +36,6 @@ const AddToFavourites = (props) => {
     const [searchQuery, setSearchQuery] = useState('');
     const themeColor = isDarkMode ? Colors.white : Colors.black;
     const dimColorTheme = isDarkMode ? Colors.light : Colors.darker;
-    const darkTheme = isDarkMode ? Colors.darker : Colors.lighter;
     const [allFavSongs, setAllFavSong] = useState([]);
     const [allSongs, setfilterSongs] = useState([]);
 
@@ -60,13 +62,11 @@ const AddToFavourites = (props) => {
                 const existingIndex = favSongsArray.findIndex(item => item.url === favSong.url);
                 if (existingIndex !== -1) {
                     favSongsArray.splice(existingIndex, 1);
-                    setFavSong(false);
                     await AsyncStorage.setItem('favSongs', JSON.stringify(favSongsArray));
                     ToastAndroid.show('Removed from favourites.', ToastAndroid.SHORT);
                 }
                 else {
                     favSongsArray.push(favSong);
-                    setFavSong(true);
                     await AsyncStorage.setItem('favSongs', JSON.stringify(favSongsArray));
                     ToastAndroid.show('Song added to favourites.', ToastAndroid.SHORT);
 
@@ -74,7 +74,6 @@ const AddToFavourites = (props) => {
                 }
             } else {
                 favSongsArray.push(favSong);
-                setFavSong(true);
                 await AsyncStorage.setItem('favSongs', JSON.stringify(favSongsArray));
                 ToastAndroid.show('Song added to favourites.', ToastAndroid.SHORT);
             }
@@ -102,16 +101,16 @@ const AddToFavourites = (props) => {
     const renderItem = ({ item }) => {
         const isFav = allFavSongs.some(fav => fav.url === item.url);
         return (
-            <View style={{ marginTop: 4, marginBottom: 15, paddingLeft: 5, paddingRight: 5 }}>
-                <View style={[, { flexDirection: 'row', gap: 5, padding: 8, alignItems: 'center', justifyContent: 'space-between' }]}>
+            <View style={{ marginBottom: 10 }}>
+                <View style={[styles.songRow, { backgroundColor: palette.surface, borderColor: palette.border }]}>
                     <TouchableOpacity onPress={() => addFavSongItem(item)}
-                        style={{ flexDirection: 'row', gap: 10, alignItems: 'center', flex: 1 }}
+                        style={{ flexDirection: 'row', gap: 12, alignItems: 'center', flex: 1 }}
 
                     >
-                        <View style={[styles.musicIconContainer, { backgroundColor: '#E82255' }]}>
+                        <View style={[styles.musicIconContainer, { backgroundColor: palette.accentSoft }]}>
                             <FontAwesomeIcon icon={faMusic} size={18} color={'white'} />
                         </View>
-                        <View style={{ flexDirection: 'column', gap: 5, alignContent: 'center', width: 220 }}>
+                        <View style={{ flexDirection: 'column', gap: 5, alignContent: 'center', flex: 1 }}>
                             <Text style={[styles.songName, { color: themeColor }]} numberOfLines={1} ellipsizeMode="tail">{item.title}</Text>
                             <View style={[styles.songInfo, { flexDirection: 'row', gap: 4, alignItems: 'center' }]}>
                                 <Text style={{ color: dimColorTheme, fontSize: 10 }}>{item.artist}</Text>
@@ -139,15 +138,18 @@ const AddToFavourites = (props) => {
     return (
 
         <SafeAreaView>
-            <View style={{ backgroundColor: isDarkMode ? Colors.black : Colors.white, width: '100%', height: '100%' }}>
-                <View style={[styles.toolBar, { borderColor: isDarkMode ? Colors.darker : Colors.lighter }]}>
-                    <TouchableOpacity onPress={goBack} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, padding: 10, borderRadius: 20, }}>
+            <View style={{ backgroundColor: palette.background, width: '100%', height: '100%' }}>
+                <View style={[styles.toolBar, { backgroundColor: palette.surface, borderColor: palette.border }]}>
+                    <TouchableOpacity onPress={goBack} style={[styles.backBtn, { backgroundColor: palette.surfaceMuted }]}>
                         <FontAwesomeIcon icon={faArrowLeft} size={20} style={{ color: themeColor }} />
                     </TouchableOpacity>
-                    <Text style={{ color: themeColor, fontSize: 16, fontWeight: 'bold' }}>Add Songs</Text>
+                    <View>
+                        <Text style={{ color: themeColor, fontSize: 18, fontWeight: '700' }}>Add Songs</Text>
+                        <Text style={{ color: palette.subtext, fontSize: 12 }}>Manage your favourite collection.</Text>
+                    </View>
                 </View>
                 <View style={[styles.searchContainer, {
-                    backgroundColor: darkTheme, color: themeColor
+                    backgroundColor: palette.surface, color: themeColor, borderColor: palette.border
                 }]}>
                     <FontAwesomeIcon icon={faSearch} size={16} color="#999" style={styles.searchIcon} />
                     <TextInput
@@ -165,6 +167,7 @@ const AddToFavourites = (props) => {
                     renderItem={renderItem}
                     keyExtractor={(item, index) => index.toString()}
                     showsVerticalScrollIndicator={false}
+                    contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 140 }}
                 />
             </View>
 
@@ -177,14 +180,15 @@ const AddToFavourites = (props) => {
 }
 const styles = StyleSheet.create({
     searchContainer: {
-        marginLeft: 15,
-        marginRight: 15,
+        marginLeft: 16,
+        marginRight: 16,
         flexDirection: 'row',
         alignItems: 'center',
         paddingLeft: 20,
         paddingRight: 20,
-        borderRadius: 10,
-        padding: 3,
+        borderRadius: 18,
+        borderWidth: 1,
+        padding: 6,
         marginTop: 15,
         marginBottom: 10
 
@@ -201,18 +205,28 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'flex-start',
+        borderWidth: 1,
+        borderRadius: 24,
         paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
-        marginTop:10,
-        paddingLeft: 8,
+        marginTop:16,
+        marginHorizontal: 16,
+        padding: 12,
         gap: 15
     },
+    backBtn: { width: 42, height: 42, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
+    songRow: {
+        flexDirection: 'row',
+        gap: 5,
+        padding: 12,
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        borderRadius: 20,
+        borderWidth: 1,
+    },
     musicIconContainer: {
-        width: 35,
-        height: 35,
-        borderRadius: 25,
-        padding: 8,
-        display: 'flex',
-        flexDirection: 'column',
+        width: 42,
+        height: 42,
+        borderRadius: 14,
         alignItems: 'center',
         justifyContent: 'center'
     },

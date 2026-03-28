@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import TextTicker from 'react-native-text-ticker';
 import useTheme from '../../hooks/useTheme';
+import useResonixTheme from '../../hooks/useResonixTheme';
 import { Colors } from 'react-native/Libraries/NewAppScreen';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import {
@@ -36,6 +37,7 @@ const All_songs = (props) => {
   const isSongPlaying = useSelector((state) => state.isSongPlaying);
 
   const { isDarkMode } = useTheme();
+  const palette = useResonixTheme();
   const [songsCount, setSongsCount] = useState(0);
   const [songItem, setSongItem] = useState();
   const themeColor = isDarkMode ? Colors.white : Colors.black;
@@ -368,13 +370,13 @@ const All_songs = (props) => {
   const renderItem = ({ item }) => {
     const isSelected = selectedItem && selectedItem.url === item.url;
     return (
-      <View style={{ marginTop: 4, marginBottom: 10, paddingLeft: 5, paddingRight: 5 }}>
-        <View style={[, { flexDirection: 'row', gap: 5, padding: 8, alignItems: 'center', justifyContent: 'space-between', minHeight: 50 }]}>
+      <View style={{ marginBottom: 10 }}>
+        <View style={[styles.songRow, { backgroundColor: palette.surface, borderColor: isSelected ? palette.accent : palette.border }]}>
           <TouchableOpacity
-            style={{ flexDirection: 'row', gap: 10, alignItems: 'center', flex: 1 }}
+            style={{ flexDirection: 'row', gap: 12, alignItems: 'center', flex: 1 }}
             onPress={() => handleSongItem(item)} onLongPress={() => openBottomSheet(item)}
           >
-            <View style={[styles.musicIconContainer, { backgroundColor: '#E82255' }]}>
+            <View style={[styles.musicIconContainer, { backgroundColor: isSelected ? palette.accent : palette.accentSoft }]}>
               <FontAwesomeIcon icon={faMusic} size={18} color={'white'} />
             </View>
             <View style={{ flex: 1, alignContent: 'center', justifyContent: 'center', minWidth: 0 }}>
@@ -403,7 +405,7 @@ const All_songs = (props) => {
             </View>
           </TouchableOpacity>
           <TouchableOpacity style={{ padding: 8, borderRadius: 25 }} onPress={() => openBottomSheet(item)}>
-            <FontAwesomeIcon icon={faEllipsisVertical} size={15} style={{ color: '#999', }} />
+            <FontAwesomeIcon icon={faEllipsisVertical} size={15} style={{ color: palette.subtext, }} />
           </TouchableOpacity>
         </View>
 
@@ -415,34 +417,36 @@ const All_songs = (props) => {
 
   return (
     <SafeAreaView>
-      <View style={{ backgroundColor: isDarkMode ? Colors.black : Colors.white, width: '100%', height: '100%' }}>
+      <View style={{ backgroundColor: palette.background, width: '100%', height: '100%' }}>
 
-        <View style={[styles.frequentlyUsedContainer, { flexDirection: 'row', justifyContent: 'space-between' }]}>
-          <View style={{ flexDirection: 'row', gap: 15, alignItems: 'center' }}>
-            <TouchableOpacity style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }} onPress={playAllSongs}>
+        <View style={[styles.frequentlyUsedContainer, { backgroundColor: palette.surface, borderColor: palette.border }]}>
+          <View style={styles.headerTop}>
+            <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
               <View style={{
-                backgroundColor: 'orange',
-                width: 25,
-                height: 25,
-                borderRadius: 25,
-                padding: 8,
-                display: 'flex',
-                flexDirection: 'column',
+                backgroundColor: palette.accentSoft,
+                width: 38,
+                height: 38,
+                borderRadius: 14,
                 alignItems: 'center',
                 justifyContent: 'center'
               }}>
-                <FontAwesomeIcon icon={faPlay} size={12} style={{ color: 'white', alignSelf: 'center' }} />
+                <FontAwesomeIcon icon={faMusic} size={15} style={{ color: palette.accent, alignSelf: 'center' }} />
               </View>
-              <Text style={{ fontWeight: 'bold', color: themeColor, fontSize: 16 }}>Play All</Text>
+              <View>
+                <Text style={{ fontWeight: '700', color: palette.text, fontSize: 20 }}>Library</Text>
+                <Text style={{ color: palette.subtext, fontSize: 12 }}>{songsCount} songs ready to play</Text>
+              </View>
+            </View>
+            <TouchableOpacity onPress={reFreshSongs} style={[styles.headerPill, { backgroundColor: palette.surfaceMuted }]}>
+              <Text style={{ color: palette.success, fontSize: 12, fontWeight: '700' }}>Refresh</Text>
             </TouchableOpacity>
-            <Text style={{ color: 'grey' }}>{songsCount} songs</Text>
-
           </View>
-          <TouchableOpacity onPress={reFreshSongs} style={{ padding: 8 }}>
-            <Text style={{ color: 'lightgreen', fontSize: 12 }}>Refresh</Text>
+          <TouchableOpacity style={[styles.playAllButton, { backgroundColor: palette.accent }]} onPress={playAllSongs}>
+            <FontAwesomeIcon icon={faPlay} size={12} style={{ color: 'white' }} />
+            <Text style={styles.playAllText}>Play All</Text>
           </TouchableOpacity>
         </View>
-        <View style={[styles.musicContainer, { backgroundColor: bgTheme }]}>
+        <View style={[styles.musicContainer, { backgroundColor: palette.background }]}>
           <FlatList
             data={Songs}
             renderItem={renderItem}
@@ -450,6 +454,7 @@ const All_songs = (props) => {
             showsVerticalScrollIndicator={false}
             onEndReached={handleEndReached}
             onEndReachedThreshold={0.5}
+            contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 140 }}
           />
         </View>
       </View>
@@ -469,9 +474,9 @@ const All_songs = (props) => {
           <TouchableWithoutFeedback >
             <View style={{
               backgroundColor: isDarkMode ? '#212121' : 'white',
+              borderTopLeftRadius: 28,
+              borderTopRightRadius: 28,
               padding: 20,
-              borderTopLeftRadius: 20,
-              borderTopRightRadius: 20,
               width: '100%',
               shadowColor: '#000',
               shadowOffset: {
@@ -520,9 +525,9 @@ const All_songs = (props) => {
           <TouchableWithoutFeedback >
             <View style={{
               backgroundColor: isDarkMode ? '#212121' : 'white',
+              borderTopLeftRadius: 28,
+              borderTopRightRadius: 28,
               padding: 20,
-              borderTopLeftRadius: 20,
-              borderTopRightRadius: 20,
               width: '100%',
               shadowColor: '#000',
               shadowOffset: {
@@ -590,9 +595,9 @@ const All_songs = (props) => {
           <TouchableWithoutFeedback >
             <View style={{
               backgroundColor: isDarkMode ? '#212121' : 'white',
+              borderTopLeftRadius: 28,
+              borderTopRightRadius: 28,
               padding: 20,
-              borderTopLeftRadius: 20,
-              borderTopRightRadius: 20,
               width: '100%',
               shadowColor: '#000',
               shadowOffset: {
@@ -665,28 +670,59 @@ const styles = StyleSheet.create({
   },
 
   frequentlyUsedContainer: {
-    paddingTop: 25,
-    paddingLeft: 13,
-    paddingRight: 15,
-    paddingBottom: 0
+    paddingTop: 18,
+    paddingHorizontal: 18,
+    paddingBottom: 16,
+    marginHorizontal: 16,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderRadius: 24,
   },
   musicContainer: {
     flex: 1,
-    marginTop: 10,
     marginBottom: 55,
+  },
+  headerTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  headerPill: {
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  playAllButton: {
+    minHeight: 48,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+    gap: 8,
+  },
+  playAllText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  songRow: {
+    flexDirection: 'row',
+    gap: 5,
+    padding: 12,
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    minHeight: 68,
+    borderWidth: 1,
     borderRadius: 20,
-
   },
 
   musicIconContainer: {
-    width: 35,
-    height: 35,
-    borderRadius: 25,
-    padding: 8,
-    display: 'flex',
-    flexDirection: 'column',
+    width: 42,
+    height: 42,
+    borderRadius: 14,
     alignItems: 'center',
-    justifyContent: 'center'
+    justifyContent: 'center',
   },
 
   songName: {

@@ -8,16 +8,16 @@ import {
   StyleSheet,
   ToastAndroid,
 } from 'react-native';
-import useTheme from '../hooks/useTheme';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useDispatch, useSelector } from 'react-redux';
 import { selectedSong, setIsSongPlaying, setFavouritesSongs } from '../redux/action';
 import TrackPlayer from 'react-native-track-player';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import { faPlay, faPause, faForwardStep, faTimes, faHeart as faHeartSolid } from '@fortawesome/free-solid-svg-icons';
+import { faPlay, faPause, faTimes, faHeart as faHeartSolid, faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 import { faHeart as faHeartRegular } from '@fortawesome/free-regular-svg-icons';
 import { useNavigation } from '@react-navigation/native';
 import BottomPlayer from './Player/BottomPlayer';
+import useResonixTheme from '../hooks/useResonixTheme';
 
 const RecentHistory = () => {
   const [recent, setRecent] = useState([]);
@@ -25,8 +25,7 @@ const RecentHistory = () => {
   const dispatch = useDispatch();
   const selected = useSelector(state => state.selectedSongReducer);
   const isPlaying = useSelector(state => state.isSongPlaying);
-  const { isDarkMode } = useTheme();
-  const isDark = isDarkMode;
+  const palette = useResonixTheme();
   const navigation = useNavigation();
 
   const load = async () => {
@@ -34,10 +33,12 @@ const RecentHistory = () => {
       const stored = await AsyncStorage.getItem('recentSongs');
       if (stored) {
         const arr = JSON.parse(stored);
-        setRecent(arr.slice(0, 50)); // only keep first 50 in UI
+        setRecent(arr.slice(0, 50));
       }
       const favStored = await AsyncStorage.getItem('favSongs');
-      if (favStored) setFavSongs(JSON.parse(favStored));
+      if (favStored) {
+        setFavSongs(JSON.parse(favStored));
+      }
     } catch (e) {
       console.error('load recent failed', e);
     }
@@ -47,27 +48,26 @@ const RecentHistory = () => {
     load();
   }, []);
 
-  const playItem = async (item) => {
-    // dispatch selection immediately
+  const playItem = async item => {
     dispatch(selectedSong(item));
     dispatch(setIsSongPlaying(true));
     navigation.navigate('AudioPlayer');
     try {
-      // attempt to find index in player's queue
       await TrackPlayer.skip(item.id ? item.id : 0);
     } catch (e) {
       console.warn('skip failed', e);
     }
     await TrackPlayer.play();
-    // update recent order and trim to 50
     let arr = recent.filter(s => s.url !== item.url);
     arr.unshift(item);
-    if (arr.length > 50) arr = arr.slice(0, 50);
+    if (arr.length > 50) {
+      arr = arr.slice(0, 50);
+    }
     setRecent(arr);
     AsyncStorage.setItem('recentSongs', JSON.stringify(arr)).catch(() => {});
   };
 
-  const removeRecentItem = async (item) => {
+  const removeRecentItem = async item => {
     try {
       const updated = recent.filter(song => song.url !== item.url);
       setRecent(updated);
@@ -77,7 +77,7 @@ const RecentHistory = () => {
     }
   };
 
-  const togglePause = async (item) => {
+  const togglePause = async item => {
     if (selected && selected.url === item.url && isPlaying) {
       await TrackPlayer.pause();
       dispatch(setIsSongPlaying(false));
@@ -89,22 +89,11 @@ const RecentHistory = () => {
     }
   };
 
-  const nextTrack = async () => {
-    try {
-      await TrackPlayer.skipToNext();
-      await TrackPlayer.play();
-      dispatch(setIsSongPlaying(true));
-    } catch (e) {
-      console.warn('next failed', e);
-    }
-  };
-
-  const addFavSongItem = async (favSong) => {
+  const addFavSongItem = async favSong => {
     try {
       let arr = favSongs ? [...favSongs] : [];
       const existingIndex = arr.findIndex(item => item.url === favSong.url);
       if (existingIndex !== -1) {
-        // remove
         arr.splice(existingIndex, 1);
         ToastAndroid.show('Removed from favourites.', ToastAndroid.SHORT);
       } else {
@@ -123,29 +112,32 @@ const RecentHistory = () => {
     const isThisPlaying = selected && selected.url === item.url && isPlaying;
     const isFav = favSongs.findIndex(s => s.url === item.url) !== -1;
     return (
-      <TouchableOpacity onPress={() => playItem(item)} style={styles.row}>
+      <TouchableOpacity
+        onPress={() => playItem(item)}
+        style={[styles.row, { backgroundColor: palette.surface, borderColor: palette.border }]}
+      >
         <View style={styles.infoContainer}>
           <View style={styles.thumb}>
             {item.artwork ? <Image source={{ uri: item.artwork }} style={styles.thumb} /> : null}
           </View>
           <View style={styles.textContainer}>
-            <Text style={[styles.title, { color: isDark ? '#fff' : '#000' }]} numberOfLines={1}>
+            <Text style={[styles.title, { color: palette.text }]} numberOfLines={1}>
               {item.title}
             </Text>
-            <Text style={[styles.subtitle, { color: isDark ? '#aaa' : '#555' }]} numberOfLines={1}>
+            <Text style={[styles.subtitle, { color: palette.subtext }]} numberOfLines={1}>
               {item.album || item.artist}
             </Text>
           </View>
         </View>
-        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+        <View style={styles.controls}>
           <TouchableOpacity onPress={() => togglePause(item)} style={styles.controlBtn}>
-            <FontAwesomeIcon icon={isThisPlaying ? faPause : faPlay} size={18} color={isDark ? '#fff' : '#000'} />
+            <FontAwesomeIcon icon={isThisPlaying ? faPause : faPlay} size={18} color={palette.text} />
           </TouchableOpacity>
           <TouchableOpacity onPress={() => addFavSongItem(item)} style={styles.controlBtn}>
-            <FontAwesomeIcon icon={isFav ? faHeartSolid : faHeartRegular} size={18} color={isDark ? '#fff' : '#000'} />
+            <FontAwesomeIcon icon={isFav ? faHeartSolid : faHeartRegular} size={18} color={isFav ? palette.accent : palette.text} />
           </TouchableOpacity>
-          <TouchableOpacity onPress={() => removeRecentItem(item)} style={[styles.controlBtn, { marginLeft: 8 }]}> 
-            <FontAwesomeIcon icon={faTimes} size={18} color={isDark ? '#fff' : '#000'} />
+          <TouchableOpacity onPress={() => removeRecentItem(item)} style={styles.controlBtn}>
+            <FontAwesomeIcon icon={faTimes} size={18} color={palette.text} />
           </TouchableOpacity>
         </View>
       </TouchableOpacity>
@@ -153,26 +145,24 @@ const RecentHistory = () => {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: isDark ? '#000' : '#fff', paddingTop: 20 }]}> 
-      {/* header with back button and logo/title */}
-      <View style={styles.topBar}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <Text style={[styles.backText, { color: isDark ? '#fff' : '#000' }]}>{'←'}</Text>
-        </TouchableOpacity>
-        <View style={styles.logoContainer}>
-          {/* placeholder logo circle */}
-          <View style={[styles.logoCircle, { backgroundColor: '#E82255' }]} />
-          <Text style={[styles.logoText, { color: isDark ? '#fff' : '#000' }]}>Resonix</Text>
+    <View style={[styles.container, { backgroundColor: palette.background }]}>
+      <View style={[styles.topCard, { backgroundColor: palette.surface, borderColor: palette.border }]}>
+        <View style={styles.topBar}>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={[styles.backBtn, { backgroundColor: palette.surfaceMuted }]}>
+            <FontAwesomeIcon icon={faArrowLeft} size={16} color={palette.text} />
+          </TouchableOpacity>
+          <View>
+            <Text style={[styles.logoText, { color: palette.text }]}>Recent History</Text>
+            <Text style={[styles.summary, { color: palette.subtext }]}>{recent.length} songs in your listening trail.</Text>
+          </View>
         </View>
       </View>
-      {/* gap under header */}
-      <View style={{ height: 10 }} />
       <FlatList
         data={recent}
         keyExtractor={(item, idx) => item.url + idx}
         renderItem={renderItem}
-        ItemSeparatorComponent={() => <View style={styles.separator} />}
-        contentContainerStyle={{ paddingBottom: 70 }}
+        ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
+        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 140 }}
       />
       <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0 }}>
         <BottomPlayer />
@@ -182,22 +172,20 @@ const RecentHistory = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 10, paddingBottom: 0 },
-  topBar: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, paddingBottom: 5 },
-  backBtn: { padding: 8 },
-  backText: { fontSize: 20 },
-  logoContainer: { flexDirection: 'row', alignItems: 'center', marginLeft: 10 },
-  logoCircle: { width: 24, height: 24, borderRadius: 12, marginRight: 6 },
-  logoText: { fontSize: 18, fontWeight: 'bold' },
-  row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 6 },
+  container: { flex: 1, paddingTop: 20 },
+  topCard: { borderWidth: 1, borderRadius: 24, padding: 16, marginHorizontal: 16, marginBottom: 12 },
+  topBar: { flexDirection: 'row', alignItems: 'center' },
+  backBtn: { padding: 10, borderRadius: 14, marginRight: 12 },
+  logoText: { fontSize: 20, fontWeight: '700', marginBottom: 4 },
+  summary: { fontSize: 12 },
+  row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 14, borderRadius: 20, borderWidth: 1 },
   infoContainer: { flexDirection: 'row', alignItems: 'center', flex: 1 },
-  thumb: { width: 50, height: 50, backgroundColor: '#444', borderRadius: 4 },
-  title: { fontSize: 14, fontWeight: 'bold' },
-  subtitle: { fontSize: 12 },
-  textContainer: { flex: 1, marginLeft: 10 },
+  thumb: { width: 56, height: 56, backgroundColor: '#444', borderRadius: 14 },
+  title: { fontSize: 14, fontWeight: '700' },
+  subtitle: { fontSize: 12, marginTop: 4 },
+  textContainer: { flex: 1, marginLeft: 12 },
   controls: { flexDirection: 'row', alignItems: 'center' },
   controlBtn: { padding: 8 },
-  separator: { height: 1, backgroundColor: '#ccc', marginVertical: 8 },
 });
 
 export default RecentHistory;

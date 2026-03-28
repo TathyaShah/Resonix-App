@@ -14,6 +14,7 @@ import LinearGradient from 'react-native-linear-gradient';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import { useDispatch, useSelector } from 'react-redux'
 import useTheme from '../../hooks/useTheme';
+import useResonixTheme from '../../hooks/useResonixTheme';
 import { setIsSongPlaying, setFavouritesSongs } from '../../redux/action';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import TrackPlayer, {} from 'react-native-track-player';
@@ -41,6 +42,7 @@ const AudioPlayer = () => {
     const [playerInitialized, setPlayerInitialized] = useState(false);
     const navigation = useNavigation();
     const { isDarkMode } = useTheme();
+    const palette = useResonixTheme();
     const [isFavSong, setFavSong] = useState(false);
 
     const ensurePlayerInitialized = async () => {
@@ -74,7 +76,7 @@ const AudioPlayer = () => {
 
     // theme
     const themeColor = isDarkMode ? Colors.white : Colors.black;
-    const bgTheme = isDarkMode ? Colors.black : Colors.white;
+    const bgTheme = palette.background;
     const dimColorTheme = isDarkMode ? Colors.light : Colors.darker;
     const rotateAnim = useRef(new Animated.Value(0)).current;
     const shouldRotate = useRef(false);
@@ -268,18 +270,18 @@ const AudioPlayer = () => {
     return (
         <View style={[styles.modal, {}]}>
             <LinearGradient
-                colors={isDarkMode ? ['#870023', '#000000'] : ['#ffffff', '#ffffff']}
+                colors={isDarkMode ? ['#1A1020', '#050507'] : ['#FFF2F6', '#F5F6FA']}
                 style={[styles.gradient, {}]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 0, y: 1 }}
             >
                 <View style={[styles.content, {}]} {...panResponder.panHandlers}>
                     <View style={styles.toolBar} >
-                        <TouchableOpacity onPress={closeIt} style={[styles.toolBarIconsContainer, { marginLeft: -10 }]}>
+                        <TouchableOpacity onPress={closeIt} style={[styles.toolBarIconsContainer, { marginLeft: -10, backgroundColor: palette.surface }]}>
                             <FontAwesomeIcon icon={faAngleDown} size={20} style={{ color: themeColor }} />
                         </TouchableOpacity>
-                        <TouchableOpacity style={[styles.toolBarIconsContainer, { marginRight: -10 }]} onPress={toggleFavSong}>
-                        <FontAwesomeIcon icon={isFavSong ? solidHeart : regularHeart} size={25} color={'lightgreen'} />
+                        <TouchableOpacity style={[styles.toolBarIconsContainer, { marginRight: -10, backgroundColor: palette.surface }]} onPress={toggleFavSong}>
+                        <FontAwesomeIcon icon={isFavSong ? solidHeart : regularHeart} size={22} color={isFavSong ? palette.success : palette.text} />
                         </TouchableOpacity>
                     </View>
                     <View style={{ marginTop: 30, flexDirection: 'column', gap: 5 }}>
@@ -289,19 +291,15 @@ const AudioPlayer = () => {
                         <Text style={[, { color: dimColorTheme, fontSize: 14 }]}>{selected.artist}</Text>
                     </View>
 
-                    <Animated.View style={[styles.musicIconContainer, { transform: [{ rotate: spin }] }]}>
+                    <Animated.View style={[styles.musicIconContainer, { backgroundColor: palette.accent, shadowColor: palette.shadow, transform: [{ rotate: spin }] }]}>
                         <FontAwesomeIcon icon={faMusic} size={100} color='white' />
                     </Animated.View>
-                    {/* lyrics placeholder */}
-                    <View style={{ marginTop: 20, paddingHorizontal: 20, height: 60, justifyContent: 'center' }}>
+                    <View style={[styles.infoCard, { backgroundColor: palette.surface, borderColor: palette.border }]}>
                         <Text style={{ color: themeColor, textAlign: 'center' }} numberOfLines={2}>
-                            {/* in a real implementation, lyrics would sync with song playback */}
                             {selected && selected.title ? `Lyrics not available for "${selected.title}"` : 'Lyrics will be shown here'}
                         </Text>
                     </View>
-                    {/* wave strip placeholder */}
-                    <View style={{ height: 30, backgroundColor: isDarkMode ? '#222' : '#eee', marginVertical: 10, borderRadius: 4 }}>
-                        {/* future: animated wave based on beat */}
+                    <View style={{ height: 30, backgroundColor: palette.surface, marginVertical: 10, borderRadius: 16, borderWidth: 1, borderColor: palette.border }}>
                     </View>
                     <View style={{ marginTop: 40, flexDirection: 'column', gap: 5, width: '100%' }}>
                         <Slider
@@ -309,7 +307,7 @@ const AudioPlayer = () => {
                             minimumValue={0}
                             maximumValue={duration}
                             minimumTrackTintColor="#E82255"
-                            maximumTrackTintColor={isDarkMode ? 'white' : '#000000'}
+                            maximumTrackTintColor={palette.subtext}
                             thumbTintColor="#E82255"
                             value={position}
                             onSlidingComplete={onSlidingComplete}
@@ -325,7 +323,7 @@ const AudioPlayer = () => {
                         <TouchableOpacity onPress={handlePreviousSong} style={[styles.playPousedContainer, { backgroundColor: 'transparent', marginLeft: -22 }]}>
                             <FontAwesomeIcon icon={faBackwardStep} size={22} style={{ color: themeColor }} />
                         </TouchableOpacity>
-                        <TouchableOpacity style={[styles.playPousedContainer, { backgroundColor: isDarkMode ? 'lightgreen' : '#E82255' }]} onPress={playPause}>
+                        <TouchableOpacity style={[styles.playPousedContainer, { backgroundColor: palette.accent }]} onPress={playPause}>
                             <FontAwesomeIcon icon={isSongPlaying === true ? faPause : faPlay} size={25} style={{ color: bgTheme }} />
                         </TouchableOpacity>
                         <TouchableOpacity onPress={handleNextSong} style={[styles.playPousedContainer, { backgroundColor: 'transparent', marginRight: -22 }]}>
@@ -361,10 +359,9 @@ const styles = StyleSheet.create({
         alignItems: 'center'
     },
     toolBarIconsContainer: {
-        borderRadius: 25,
+        borderRadius: 16,
         width: 40,
         height: 40,
-        flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
     },
@@ -382,11 +379,14 @@ const styles = StyleSheet.create({
         height: 250,
         backgroundColor: '#E82255',
         borderRadius: 250,
-        flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
         alignSelf: 'center',
-        marginTop: 40
+        marginTop: 40,
+        shadowOpacity: 0.18,
+        shadowRadius: 24,
+        shadowOffset: { width: 0, height: 14 },
+        elevation: 8,
 
     },
     toolBar: {
@@ -405,8 +405,16 @@ const styles = StyleSheet.create({
     },
     gradient: {
         flex: 1,
-    }
-    , songName: {
+    },
+    infoCard: {
+        marginTop: 20,
+        paddingHorizontal: 20,
+        height: 72,
+        justifyContent: 'center',
+        borderRadius: 20,
+        borderWidth: 1,
+    },
+    songName: {
         fontSize: 18
     }
 });

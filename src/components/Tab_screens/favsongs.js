@@ -9,6 +9,7 @@ import {
   Modal, TouchableWithoutFeedback, Pressable
 } from 'react-native';
 import useTheme from '../../hooks/useTheme';
+import useResonixTheme from '../../hooks/useResonixTheme';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import { Colors } from 'react-native/Libraries/NewAppScreen';
 import { faEllipsisVertical, faMusic, faPlay } from '@fortawesome/free-solid-svg-icons';
@@ -24,6 +25,7 @@ const FavSongs = ({ navigation }) => {
   const favSongs = useSelector((state) => state.favSongsReducer);
   const isSongPlaying = useSelector((state) => state.isSongPlaying);
   const { isDarkMode } = useTheme();
+  const palette = useResonixTheme();
   const [rmSongItem, setrmSongItem] = useState();
   const themeColor = isDarkMode ? Colors.white : Colors.black;
   const bgTheme = isDarkMode ? Colors.black : Colors.white;
@@ -98,17 +100,17 @@ const FavSongs = ({ navigation }) => {
     const isSelected = selectedItem && selectedItem.url === item.url;
 
     return (
-      <View style={{ marginTop: 4, marginBottom: 15, paddingLeft: 5, paddingRight: 5 }}>
-        <View style={[, { flexDirection: 'row', gap: 5, padding: 8, alignItems: 'center', justifyContent: 'space-between' }]}>
+      <View style={{ marginBottom: 10 }}>
+        <View style={[styles.songRow, { backgroundColor: palette.surface, borderColor: isSelected ? palette.accent : palette.border }]}>
           <TouchableOpacity
-            style={{ flexDirection: 'row', gap: 10, alignItems: 'center', flex: 1 }}
+            style={{ flexDirection: 'row', gap: 12, alignItems: 'center', flex: 1 }}
             onPress={() => handleSongItem(item)}
             onLongPress={() => openBottomSheetOption(item)}
           >
-            <View style={[styles.musicIconContainer, { backgroundColor: '#E82255' }]}>
+            <View style={[styles.musicIconContainer, { backgroundColor: isSelected ? palette.accent : palette.accentSoft }]}>
               <FontAwesomeIcon icon={faMusic} size={18} color={'white'} />
             </View>
-            <View style={{ flexDirection: 'column', gap: 5, alignContent: 'center', width: 220 }}>
+            <View style={{ flexDirection: 'column', gap: 5, alignContent: 'center', flex: 1 }}>
               <Text style={[styles.songName, { color: isSelected ? '#E82255' : themeColor }]} numberOfLines={1} ellipsizeMode="tail">{item.title}</Text>
               <View style={[styles.songInfo, { flexDirection: 'row', gap: 4, alignItems: 'center' }]}>
                 <Text style={{ color: isSelected ? '#E82255' : dimColorTheme, fontSize: 10 }}>{item.artist}</Text>
@@ -119,7 +121,7 @@ const FavSongs = ({ navigation }) => {
           </TouchableOpacity>
 
           <TouchableOpacity onPress={() => openBottomSheetOption(item)} >
-            <FontAwesomeIcon icon={faEllipsisVertical} size={16} style={{ color: 'grey' }} />
+            <FontAwesomeIcon icon={faEllipsisVertical} size={16} style={{ color: palette.subtext }} />
           </TouchableOpacity>
         </View>
       </View>
@@ -127,33 +129,35 @@ const FavSongs = ({ navigation }) => {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: bgTheme }}>
-      <View style={[styles.frequentlyUsedContainer, { flexDirection: 'row', justifyContent: 'space-between' }]}>
+    <View style={{ flex: 1, backgroundColor: palette.background }}>
+      <View style={[styles.frequentlyUsedContainer, { backgroundColor: palette.surface, borderColor: palette.border }]}>
         <View style={{ flexDirection: 'row', gap: 15, alignItems: 'center' }}>
-          <Text style={{ color: 'grey' }}>{favSongs.length} songs</Text>
+          <Text style={{ color: palette.text, fontSize: 20, fontWeight: '700' }}>Favourites</Text>
         </View>
-        <TouchableOpacity style={{ padding: 8 }} onPress={addMoreSongs}>
-          <Text style={{ color: 'lightgreen', fontSize: 12 }}>Add songs</Text>
+        <TouchableOpacity style={[styles.addPill, { backgroundColor: palette.surfaceMuted }]} onPress={addMoreSongs}>
+          <Text style={{ color: palette.success, fontSize: 12, fontWeight: '700' }}>Add songs</Text>
         </TouchableOpacity>
       </View>
+      <Text style={[styles.countText, { color: palette.subtext }]}>{favSongs.length} songs saved</Text>
 
 
-      <View style={[styles.musicContainer, { backgroundColor: bgTheme }]}>
+      <View style={[styles.musicContainer, { backgroundColor: palette.background }]}>
         {favSongs.length > 0 ? (
           <FlatList
             data={favSongs}
             renderItem={renderItem}
             keyExtractor={(item, index) => index.toString()}
             showsVerticalScrollIndicator={false}
+            contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 140 }}
           />
 
         ) : (
 
-          <View style={{ flex: 1, flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
+          <View style={[styles.emptyCard, { backgroundColor: palette.surface, borderColor: palette.border }]}>
             <View style={{ backgroundColor: '#E82255', padding: 10, borderRadius: 50 }}>
               <FontAwesomeIcon icon={faMusic} size={30} color='white' />
             </View>
-            <Text>No songs</Text>
+            <Text style={{ color: palette.text, fontSize: 18, fontWeight: '700' }}>No songs yet</Text>
             <TouchableOpacity style={{ color: '#E82255' }} onPress={addMoreSongs}>
               <Text style={{ color: '#E82255' }}>Add Songs</Text>
             </TouchableOpacity>
@@ -215,27 +219,49 @@ const FavSongs = ({ navigation }) => {
 
 const styles = StyleSheet.create({
   frequentlyUsedContainer: {
-    paddingTop: 20,
-    paddingLeft: 15,
-    paddingRight: 15,
-    paddingBottom: 10
+    paddingTop: 18,
+    paddingHorizontal: 18,
+    paddingBottom: 18,
+    marginHorizontal: 16,
+    marginTop: 16,
+    borderWidth: 1,
+    borderRadius: 24,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
+  countText: { paddingHorizontal: 20, marginTop: 10, marginBottom: 6, fontSize: 12 },
   musicContainer: {
     flex: 1,
     marginBottom: 55,
-
+  },
+  addPill: { paddingHorizontal: 12, paddingVertical: 9, borderRadius: 16 },
+  songRow: {
+    flexDirection: 'row',
+    gap: 5,
+    padding: 12,
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderWidth: 1,
+    borderRadius: 20,
   },
   musicIconContainer: {
-    width: 35,
-    height: 35,
-    borderRadius: 25,
-    padding: 8,
-    display: 'flex',
-    flexDirection: 'column',
+    width: 42,
+    height: 42,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center'
 
-  }
+  },
+  emptyCard: {
+    margin: 16,
+    borderWidth: 1,
+    borderRadius: 24,
+    padding: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+  },
 
 });
 

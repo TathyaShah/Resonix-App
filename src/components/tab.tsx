@@ -19,38 +19,38 @@ import {
     View,
 } from 'react-native';
 import useTheme from '../hooks/useTheme';
-import {
-    Colors
-} from 'react-native/Libraries/NewAppScreen';
+import useResonixTheme from '../hooks/useResonixTheme';
 import { faSearch, faPlay, faHome, faUser, faMusic } from '@fortawesome/free-solid-svg-icons';
 
 const Tab = createBottomTabNavigator();
 
 const TabNavigator = () => {
     const { isDarkMode } = useTheme();
+    const palette = useResonixTheme();
     const navigation = useNavigation();
     return (
-        <View style={{ flex: 1, backgroundColor: isDarkMode ? Colors.black : Colors.white }}>
-            {/* header bar */}
-            <View style={styles.titleContainer}>
+        <View style={{ flex: 1, backgroundColor: palette.background }}>
+            <View style={[styles.titleContainer, { backgroundColor: palette.background }]}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                     <View style={{
-                        backgroundColor: '#E82255',
-                        width: 35,
-                        height: 35,
-                        borderRadius: 25,
-                        padding: 8,
+                        backgroundColor: palette.accent,
+                        width: 42,
+                        height: 42,
+                        borderRadius: 16,
                         justifyContent: 'center',
                         alignItems: 'center'
                     }}>
                         <FontAwesomeIcon icon={faPlay} size={16} style={{ color: 'white' }} />
                     </View>
-                    <Text style={[styles.titleStyle, { color: isDarkMode ? Colors.white : Colors.black }]}>
-                        <Text style={{ color: '#e82255', fontWeight: 'bold' }}>Resonix</Text>
-                    </Text>
+                    <View>
+                        <Text style={[styles.eyebrow, { color: palette.subtext }]}>Your music space</Text>
+                        <Text style={[styles.titleStyle, { color: palette.text }]}>
+                            <Text style={{ color: palette.accent, fontWeight: 'bold' }}>Resonix</Text>
+                        </Text>
+                    </View>
                 </View>
-                <TouchableOpacity onPress={() => navigation.navigate('Search')} style={styles.SearchIconContainer}>
-                    <FontAwesomeIcon icon={faSearch} size={18} style={{ color: isDarkMode ? Colors.white : Colors.black }} />
+                <TouchableOpacity onPress={() => navigation.navigate('Search')} style={[styles.SearchIconContainer, { backgroundColor: palette.surface, borderColor: palette.border }]}>
+                    <FontAwesomeIcon icon={faSearch} size={18} style={{ color: palette.text }} />
                 </TouchableOpacity>
             </View>
             <Tab.Navigator
@@ -58,7 +58,12 @@ const TabNavigator = () => {
                 screenOptions={({ route }) => ({
                     headerShown: false,
                     tabBarStyle: {
-                        backgroundColor: isDarkMode ? Colors.black : Colors.white,
+                        backgroundColor: palette.surface,
+                        borderTopColor: palette.border,
+                        borderTopWidth: 1,
+                        height: 68,
+                        paddingBottom: 8,
+                        paddingTop: 8,
                     },
                     tabBarIcon: ({ color, size }) => {
                         let icon;
@@ -68,8 +73,9 @@ const TabNavigator = () => {
                         else if (route.name === 'Account') icon = faUser;
                         return <FontAwesomeIcon icon={icon} size={size} style={{ color }} />;
                     },
-                    tabBarActiveTintColor: '#E82255',
-                    tabBarInactiveTintColor: 'grey',
+                    tabBarActiveTintColor: palette.accent,
+                    tabBarInactiveTintColor: palette.subtext,
+                    tabBarLabelStyle: styles.tabBarLabel,
                 })}
             >
                 <Tab.Screen name="Home" component={Home} />
@@ -84,25 +90,30 @@ const TabNavigator = () => {
 
 const styles = StyleSheet.create({
     titleContainer: {
-        display: 'flex',
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        paddingLeft: 10,
-        paddingRight: 10,
+        paddingLeft: 16,
+        paddingRight: 16,
         paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
-        marginTop: 10
-
+        marginTop: 10,
+        marginBottom: 4,
+    },
+    eyebrow: {
+        fontSize: 12,
+        textTransform: 'uppercase',
+        letterSpacing: 0.8,
+        marginBottom: 2,
     },
     titleStyle: {
-        fontSize: 20,
+        fontSize: 26,
         textAlign: 'left',
         fontWeight: 'bold',
-
     },
     SearchIconContainer: {
-        borderRadius: 50,
-        padding: 8
+        borderRadius: 16,
+        padding: 12,
+        borderWidth: 1,
     },
     tabBarIndicator: {
         backgroundColor: 'transparent',
@@ -110,9 +121,8 @@ const styles = StyleSheet.create({
     },
     tabBarLabel: {
         textTransform: 'capitalize',
-        fontWeight: 'bold',
-
-
+        fontWeight: '700',
+        fontSize: 12,
     }
 
 });

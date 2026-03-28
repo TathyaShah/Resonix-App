@@ -17,6 +17,7 @@ import {
     Easing
 } from 'react-native';
 import useTheme from '../../hooks/useTheme';
+import useResonixTheme from '../../hooks/useResonixTheme';
 import { useNavigation } from '@react-navigation/native';
 
 const BottomPlayer = () => {
@@ -27,8 +28,9 @@ const BottomPlayer = () => {
     const isSongPlaying = useSelector((state) => state.isSongPlaying);
     //theme 
     const { isDarkMode } = useTheme();
+    const palette = useResonixTheme();
     const themeColor = isDarkMode ? Colors.white : Colors.black;
-    const bgTheme = isDarkMode ? Colors.black : Colors.white;
+    const bgTheme = palette.surface;
     const dimColorTheme = isDarkMode ? Colors.light : Colors.darker;
     const [isPlayerReady, setPlayerReady] = useState(false);
     const [playerInitialized, setPlayerInitialized] = useState(false);
@@ -198,9 +200,9 @@ const BottomPlayer = () => {
 
     return (
         <SafeAreaView style={{}}>
-            <View style={[styles.bottomPlayer, { backgroundColor: bgTheme, borderColor: isDarkMode ? Colors.darker : Colors.lighter }]}>
+            <View style={[styles.bottomPlayer, { backgroundColor: bgTheme, borderColor: palette.border, shadowColor: palette.shadow }]}>
                 <TouchableOpacity style={{ flexDirection: 'row', gap: 10, alignItems: 'center', width: 160 }} onPress={toggleModal}>
-                    <Animated.View style={[styles.rotateMusicIconContainer, { backgroundColor: '#E82255', transform: [{ rotate: spin }] }]}>
+                    <Animated.View style={[styles.rotateMusicIconContainer, { backgroundColor: palette.accent, transform: [{ rotate: spin }] }]}>
                         <FontAwesomeIcon icon={faMusic} size={18} color='white' />
                     </Animated.View>
                     {selected !== null ? (
@@ -216,12 +218,12 @@ const BottomPlayer = () => {
                     )}
 
                 </TouchableOpacity>
-                <View style={{ flexDirection: 'row', gap: 4, alignItems: 'flex-end', marginRight: -20 }}>
-                    <TouchableOpacity onPress={() => playPause()} style={styles.controls}>
-                        <FontAwesomeIcon icon={isSongPlaying === true ? faPause : faPlay} size={20} style={{ color: dimColorTheme, alignSelf: 'center' }} />
+                <View style={{ flexDirection: 'row', gap: 4, alignItems: 'flex-end' }}>
+                    <TouchableOpacity onPress={() => playPause()} style={[styles.controls, { backgroundColor: palette.surfaceMuted }]}>
+                        <FontAwesomeIcon icon={isSongPlaying === true ? faPause : faPlay} size={18} style={{ color: themeColor, alignSelf: 'center' }} />
                     </TouchableOpacity>
-                    <TouchableOpacity onPress={handleNextSong} style={styles.controls}>
-                        <FontAwesomeIcon icon={faForwardStep} size={20} style={{ color: dimColorTheme }} />
+                    <TouchableOpacity onPress={handleNextSong} style={[styles.controls, { backgroundColor: palette.accent }]}>
+                        <FontAwesomeIcon icon={faForwardStep} size={18} style={{ color: '#fff' }} />
                     </TouchableOpacity>
                 </View>
             </View>
@@ -231,21 +233,24 @@ const BottomPlayer = () => {
 
 const styles = StyleSheet.create({
     bottomPlayer: {
-        // remove flex:1 so it doesn't cover entire screen when absolute
         paddingLeft: 13,
-        paddingRight: 22,
-        padding: 10,
-        width: '100%',
-        height: 60,
+        paddingRight: 14,
+        paddingVertical: 12,
+        width: '92%',
+        minHeight: 74,
         position: 'absolute',
-        // raise it above the tab bar (approx. 60px)
-        bottom: 60,
+        bottom: 72,
+        alignSelf: 'center',
         flexDirection: 'row',
         gap: 10,
         justifyContent: 'space-between',
         alignItems: 'center',
-        borderTopColor: '#E82255',
         borderTopWidth: 1,
+        borderRadius: 24,
+        shadowOpacity: 0.16,
+        shadowRadius: 16,
+        shadowOffset: { width: 0, height: 8 },
+        elevation: 10,
     },
     rotateMusicIconContainer: {
         width: 35,
@@ -259,10 +264,9 @@ const styles = StyleSheet.create({
     },
 
     controls: {
-        borderRadius: 25,
-        width: 50,
-        height: 50,
-        flexDirection: 'column',
+        borderRadius: 18,
+        width: 42,
+        height: 42,
         alignItems: 'center',
         justifyContent: 'center',
     }

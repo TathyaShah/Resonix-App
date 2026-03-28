@@ -6,29 +6,28 @@ import All_songs from './Tab_screens/All_songs';
 import FavSongs from './Tab_screens/favsongs';
 import Playlists from './Tab_screens/Playlists';
 import { StyleSheet, View } from 'react-native';
-import useTheme from '../hooks/useTheme';
-import { Colors } from 'react-native/Libraries/NewAppScreen';
+import useResonixTheme from '../hooks/useResonixTheme';
 
 const TopTab = createMaterialTopTabNavigator();
 
 const MusicTabs = () => {
-  const { isDarkMode } = useTheme();
+  const palette = useResonixTheme();
   return (
-    <View style={{ flex: 1, backgroundColor: isDarkMode ? Colors.black : Colors.white }}>
+    <View style={{ flex: 1, backgroundColor: palette.background }}>
       <TopTab.Navigator
         screenOptions={{
           tabBarStyle: {
-            backgroundColor: isDarkMode ? Colors.black : Colors.white,
+            backgroundColor: palette.background,
             elevation: 0,
-            paddingLeft: 15,
+            paddingLeft: 16,
             paddingRight: 10,
-            paddingTop: 30,
+            paddingTop: 18,
             borderBottomWidth: 1,
-            borderColor: isDarkMode ? Colors.darker : Colors.lighter,
+            borderColor: palette.border,
           },
           tabBarGap: 0,
-          tabBarInactiveTintColor: 'grey',
-          tabBarActiveTintColor: '#E82255',
+          tabBarInactiveTintColor: palette.subtext,
+          tabBarActiveTintColor: palette.accent,
           tabBarLabelStyle: styles.tabBarLabel,
           tabBarItemStyle: { width: 'auto', left: -15 },
         }}
@@ -75,11 +74,14 @@ const MusicTabs = () => {
 
 const styles = StyleSheet.create({
   tabBarIndicator: {
-    backgroundColor: 'transparent',
+    backgroundColor: '#E82255',
+    height: 3,
+    borderRadius: 999,
   },
   tabBarLabel: {
     textTransform: 'capitalize',
-    fontWeight: 'bold',
+    fontWeight: '700',
+    fontSize: 13,
   },
 });
 

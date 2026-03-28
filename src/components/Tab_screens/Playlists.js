@@ -1,11 +1,12 @@
 import React from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
-import useTheme from '../../hooks/useTheme';
+import useResonixTheme from '../../hooks/useResonixTheme';
+import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
+import { faChevronRight, faCompactDisc } from '@fortawesome/free-solid-svg-icons';
 
 // simple placeholder listing playlists; favorites included
 const Playlists = ({ navigation }) => {
-  const { isDarkMode } = useTheme();
-  const isDark = isDarkMode;
+  const palette = useResonixTheme();
   const dummy = [
     { id: 'fav', name: 'Favorites' },
     { id: '1', name: 'Workout' },
@@ -16,13 +17,24 @@ const Playlists = ({ navigation }) => {
     navigation.navigate('PlaylistDetail', {playlist: item});
   };
   return (
-    <View style={[styles.container, { backgroundColor: isDark ? '#000' : '#fff' }]}> 
+    <View style={[styles.container, { backgroundColor: palette.background }]}> 
+      <View style={[styles.heroCard, { backgroundColor: palette.surface, borderColor: palette.border }]}>
+        <View style={[styles.iconWrap, { backgroundColor: palette.accentSoft }]}>
+          <FontAwesomeIcon icon={faCompactDisc} size={16} color={palette.accent} />
+        </View>
+        <Text style={[styles.title, { color: palette.text }]}>Playlists</Text>
+        <Text style={[styles.subtitle, { color: palette.subtext }]}>
+          Keep your go-to collections organized in one place.
+        </Text>
+      </View>
       <FlatList
         data={dummy}
+        contentContainerStyle={styles.list}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
-          <TouchableOpacity onPress={() => openPlaylist(item)} style={styles.row}>
-            <Text style={{ color: isDark ? '#fff' : '#000' }}>{item.name}</Text>
+          <TouchableOpacity onPress={() => openPlaylist(item)} style={[styles.row, { backgroundColor: palette.surface, borderColor: palette.border }]}>
+            <Text style={{ color: palette.text, fontSize: 15, fontWeight: '600' }}>{item.name}</Text>
+            <FontAwesomeIcon icon={faChevronRight} size={14} color={palette.subtext} />
           </TouchableOpacity>
         )}
       />
@@ -31,8 +43,22 @@ const Playlists = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 15 },
-  row: { paddingVertical: 12, borderBottomWidth: 1, borderColor: '#ccc' },
+  container: { flex: 1, padding: 16 },
+  heroCard: { borderWidth: 1, borderRadius: 24, padding: 18, marginBottom: 14 },
+  iconWrap: { width: 36, height: 36, borderRadius: 12, alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
+  title: { fontSize: 22, fontWeight: '700', marginBottom: 4 },
+  subtitle: { fontSize: 13, lineHeight: 18 },
+  list: { paddingBottom: 120 },
+  row: {
+    paddingHorizontal: 16,
+    paddingVertical: 18,
+    borderRadius: 18,
+    borderWidth: 1,
+    marginBottom: 10,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
 });
 
 export default Playlists;

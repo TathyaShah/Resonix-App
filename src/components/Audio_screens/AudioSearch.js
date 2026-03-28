@@ -31,6 +31,7 @@ import TrackPlayer from 'react-native-track-player';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AppContext } from '../../../App';
 import useTheme from '../../hooks/useTheme';
+import useResonixTheme from '../../hooks/useResonixTheme';
 import Share from 'react-native-share';
 import RNFS from 'react-native-fs';
 const SearchMusic = () => {
@@ -49,15 +50,13 @@ const SearchMusic = () => {
 
 
     const { isDarkMode } = useTheme();
+    const palette = useResonixTheme();
     const [searchQuery, setSearchQuery] = useState('');
     const [showNoResults, setShowNoResults] = useState();
     const [filterType, setFilterType] = useState('Songs');
     const [history, setHistory] = useState([]);
-    const backgroundStyle = {
-        backgroundColor: isDarkMode ? Colors.black : Colors.white,
-    };
     const themeColor = isDarkMode ? Colors.white : Colors.black;
-    const bgTheme = isDarkMode ? Colors.black : Colors.white;
+    const bgTheme = palette.background;
     const dimColorTheme = isDarkMode ? Colors.light : Colors.darker;
     const darkTheme = isDarkMode ? Colors.darker : Colors.lighter;
     const inputRef = useRef(null);
@@ -386,16 +385,16 @@ const SearchMusic = () => {
     const renderItem = ({ item }) => {
         const isSelected = selectedItem && selectedItem.url === item.url;
         return (
-            <View style={{ marginTop: 4, marginBottom: 15, paddingLeft: 5, paddingRight: 5 }}>
-                <View style={[, { flexDirection: 'row', gap: 5, padding: 8, alignItems: 'center', justifyContent: 'space-between' }]}>
+            <View style={{ marginBottom: 10 }}>
+                <View style={[styles.songRow, { backgroundColor: palette.surface, borderColor: isSelected ? palette.accent : palette.border }]}>
                     <TouchableOpacity
-                        style={{ flexDirection: 'row', gap: 10, alignItems: 'center', flex: 1 }}
+                        style={{ flexDirection: 'row', gap: 12, alignItems: 'center', flex: 1 }}
                         onPress={() => handleSongItem(item)} onLongPress={() => openBottomSheet(item)}
                     >
-                        <View style={[styles.musicIconContainer, { backgroundColor: '#E82255' }]}>
+                        <View style={[styles.musicIconContainer, { backgroundColor: isSelected ? palette.accent : palette.accentSoft }]}>
                             <FontAwesomeIcon icon={faMusic} size={18} color={'white'} />
                         </View>
-                        <View style={{ flexDirection: 'column', gap: 5, alignContent: 'center', width: 220 }}>
+                        <View style={{ flexDirection: 'column', gap: 5, alignContent: 'center', flex: 1 }}>
                             <Text style={[styles.songName, { color: isSelected ? '#E82255' : themeColor }]} numberOfLines={1} ellipsizeMode="tail">{item.title}</Text>
                             <Text style={[styles.songInfo, { color: isSelected ? '#E82255' : dimColorTheme, fontSize: 10 }]} numberOfLines={1} ellipsizeMode="tail">
                                 {`${item.artist || 'Unknown Artist'} - ${item.album || 'Unknown Album'}`}
@@ -404,7 +403,7 @@ const SearchMusic = () => {
                     </TouchableOpacity>
 
                     <TouchableOpacity style={{ padding: 5, borderRadius: 20, }} onPress={() => openBottomSheet(item)}>
-                        <FontAwesomeIcon icon={faEllipsisVertical} size={13} style={{ color: '#999', paddingLeft: 10 }} />
+                        <FontAwesomeIcon icon={faEllipsisVertical} size={13} style={{ color: palette.subtext, paddingLeft: 10 }} />
                     </TouchableOpacity>
                 </View>
 
@@ -415,61 +414,58 @@ const SearchMusic = () => {
 
     return (
         <View style={{ flex: 1, backgroundColor: bgTheme }}>
-            <View style={{
-                flexDirection: 'row', alignItems: 'center', gap: 20, paddingHorizontal: 15, borderBottomWidth: 1,
-                borderColor: isDarkMode ? Colors.darker : Colors.lighter, paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
-                marginTop: 10,
-            }}>
-                <TextInput
-                    ref={inputRef}
-                    style={{ flex: 1, padding: 8, backgroundColor: 'transparent' }}
-                    placeholder="Search song, artist, album"
-                    placeholderTextColor="#999"
-                    onChangeText={(text) => {
-                        handleSearch(text);
-                    }}
-                    value={searchQuery}
-                    cursorColor={'#E82255'}
-                    onSubmitEditing={() => saveHistory(searchQuery.trim())}
-                />
-                {searchQuery !== '' && (
-                    <TouchableOpacity onPress={clearSearch} style={{ padding: 8 }}>
-                        <FontAwesomeIcon icon={faTimes} size={16} style={{ color: '#999' }} />
-                    </TouchableOpacity>
-                )}
-                <TouchableOpacity onPress={closeSearch}>
-                    <Text style={{ color: 'lightgreen' }}>Cancel</Text>
+            <View style={[styles.searchShell, { paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0 }]}>
+                <View style={[styles.searchBar, { backgroundColor: palette.surface, borderColor: palette.border }]}>
+                    <FontAwesomeIcon icon={faSearch} size={15} style={{ color: palette.subtext }} />
+                    <TextInput
+                        ref={inputRef}
+                        style={[styles.searchInput, { color: palette.text }]}
+                        placeholder="Search song, artist, album"
+                        placeholderTextColor={palette.subtext}
+                        onChangeText={(text) => {
+                            handleSearch(text);
+                        }}
+                        value={searchQuery}
+                        cursorColor={palette.accent}
+                        onSubmitEditing={() => saveHistory(searchQuery.trim())}
+                    />
+                    {searchQuery !== '' && (
+                        <TouchableOpacity onPress={clearSearch} style={{ padding: 8 }}>
+                            <FontAwesomeIcon icon={faTimes} size={16} style={{ color: palette.subtext }} />
+                        </TouchableOpacity>
+                    )}
+                </View>
+                <TouchableOpacity onPress={closeSearch} style={[styles.cancelPill, { backgroundColor: palette.surfaceMuted }]}>
+                    <Text style={{ color: palette.success, fontWeight: '700' }}>Close</Text>
                 </TouchableOpacity>
             </View>
-            {/* filter chips */}
-            <View style={{ flexDirection: 'row', paddingHorizontal: 15, paddingVertical: 10 }}>
+            <View style={styles.filterWrap}>
                 {['Songs', 'Artist', 'Album', 'Playlist'].map((type) => (
                     <TouchableOpacity
                         key={type}
-                        style={{
-                            paddingHorizontal: 12,
-                            paddingVertical: 6,
-                            borderRadius: 16,
-                            backgroundColor: filterType === type ? '#E82255' : '#eee',
-                            marginRight: 8,
-                        }}
+                        style={[
+                            styles.filterChip,
+                            {
+                                backgroundColor: filterType === type ? palette.accent : palette.surface,
+                                borderColor: filterType === type ? palette.accent : palette.border,
+                            },
+                        ]}
                         onPress={() => setFilterType(type)}
                     >
-                        <Text style={{ color: filterType === type ? '#fff' : '#333', fontSize: 12 }}>{type}</Text>
+                        <Text style={{ color: filterType === type ? '#fff' : palette.subtext, fontSize: 12, fontWeight: '600' }}>{type}</Text>
                     </TouchableOpacity>
                 ))}
             </View>
-            {/* show history if nothing typed */}
             {searchQuery === '' && history.length > 0 && (
-                <View style={{ paddingHorizontal: 15, paddingVertical: 10 }}>
-                    <Text style={{ color: themeColor, marginBottom: 5 }}>Recent searches</Text>
+                <View style={[styles.historyCard, { backgroundColor: palette.surface, borderColor: palette.border }]}>
+                    <Text style={{ color: themeColor, marginBottom: 8, fontWeight: '700' }}>Recent searches</Text>
                     {history.map((term, idx) => (
-                        <View key={idx} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 2 }}>
+                        <View key={idx} style={[styles.historyRow, { borderColor: palette.divider }]}>
                             <TouchableOpacity style={{ flex: 1 }} onPress={() => { handleSearch(term); setSearchQuery(term); }}>
-                                <Text style={{ color: '#E82255' }}>{term}</Text>
+                                <Text style={{ color: palette.accent }}>{term}</Text>
                             </TouchableOpacity>
                             <TouchableOpacity onPress={() => removeHistoryItem(term)} style={{ padding: 4 }}>
-                                <FontAwesomeIcon icon={faTimes} size={14} color="#999" />
+                                <FontAwesomeIcon icon={faTimes} size={14} color={palette.subtext} />
                             </TouchableOpacity>
                         </View>
                     ))}
@@ -482,11 +478,12 @@ const SearchMusic = () => {
                 renderItem={renderItem}
                 keyExtractor={(item, index) => index.toString()}
                 showsVerticalScrollIndicator={false}
+                contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 140 }}
             />
             {showNoResults &&
-                <View style={{ flex: 1, alignSelf: 'center', alignItems: 'center' }}>
-                    <FontAwesomeIcon icon={faSearch} size={25} color="#999" />
-                    <Text style={{ color: '#999', marginTop: 10, fontSize: 16 }}>No Search Found</Text>
+                <View style={{ flex: 1, alignSelf: 'center', alignItems: 'center', marginTop: 40 }}>
+                    <FontAwesomeIcon icon={faSearch} size={25} color={palette.subtext} />
+                    <Text style={{ color: palette.subtext, marginTop: 10, fontSize: 16 }}>No Search Found</Text>
                 </View>
             }
             <Modal
@@ -690,14 +687,71 @@ const SearchMusic = () => {
     )
 }
 const styles = StyleSheet.create({
- 
+    searchShell: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 10,
+        paddingHorizontal: 16,
+        marginTop: 10,
+        marginBottom: 10,
+    },
+    searchBar: {
+        flex: 1,
+        borderWidth: 1,
+        borderRadius: 18,
+        paddingHorizontal: 14,
+        minHeight: 54,
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    searchInput: {
+        flex: 1,
+        paddingHorizontal: 10,
+    },
+    cancelPill: {
+        borderRadius: 16,
+        paddingHorizontal: 14,
+        paddingVertical: 14,
+    },
+    filterWrap: {
+        flexDirection: 'row',
+        paddingHorizontal: 16,
+        paddingBottom: 12,
+    },
+    filterChip: {
+        paddingHorizontal: 12,
+        paddingVertical: 8,
+        borderRadius: 16,
+        borderWidth: 1,
+        marginRight: 8,
+    },
+    historyCard: {
+        marginHorizontal: 16,
+        marginBottom: 12,
+        borderRadius: 20,
+        borderWidth: 1,
+        padding: 16,
+    },
+    historyRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingVertical: 8,
+        borderBottomWidth: 1,
+    },
+    songRow: {
+        flexDirection: 'row',
+        gap: 5,
+        padding: 12,
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        borderRadius: 20,
+        borderWidth: 1,
+    },
     musicIconContainer: {
-        width: 35,
-        height: 35,
-        borderRadius: 25,
-        padding: 8,
-        display: 'flex',
-        flexDirection: 'column',
+        width: 42,
+        height: 42,
+        borderRadius: 14,
         alignItems: 'center',
         justifyContent: 'center'
     },

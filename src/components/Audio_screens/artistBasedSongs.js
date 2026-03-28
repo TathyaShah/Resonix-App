@@ -10,6 +10,7 @@ import {
     Pressable, TouchableWithoutFeedback, PanResponder, PermissionsAndroid,
 } from 'react-native';
 import useTheme from '../../hooks/useTheme';
+import useResonixTheme from '../../hooks/useResonixTheme';
 import { Colors } from 'react-native/Libraries/NewAppScreen';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import {
@@ -34,6 +35,7 @@ const ArtisBasedSongs = ({ route, navigation }) => {
     const [songItem, setSongItem] = useState();
     const { artistName } = route.params;
     const { isDarkMode } = useTheme();
+    const palette = useResonixTheme();
     const themeColor = isDarkMode ? Colors.white : Colors.black;
     const bgTheme = isDarkMode ? Colors.black : Colors.white;
     const dimColorTheme = isDarkMode ? Colors.light : Colors.darker;
@@ -291,16 +293,16 @@ const ArtisBasedSongs = ({ route, navigation }) => {
     const renderItem = ({ item }) => {
         const isSelected = selectedItem && selectedItem.url === item.url;
         return (
-            <View style={{ marginTop: 4, marginBottom: 10, paddingLeft: 5, paddingRight: 5 }}>
-                <View style={[, { flexDirection: 'row', gap: 5, padding: 8, alignItems: 'center', justifyContent: 'space-between' }]}>
+            <View style={{ marginBottom: 10 }}>
+                <View style={[styles.songRow, { backgroundColor: palette.surface, borderColor: isSelected ? palette.accent : palette.border }]}>
                     <TouchableOpacity
-                        style={{ flexDirection: 'row', gap: 10, alignItems: 'center', flex: 1 }}
+                        style={{ flexDirection: 'row', gap: 12, alignItems: 'center', flex: 1 }}
                         onPress={() => handleSongItem(item)} onLongPress={() => openBottomSheet(item)}
                     >
-                        <View style={[styles.musicIconContainer, { backgroundColor: '#E82255' }]}>
+                        <View style={[styles.musicIconContainer, { backgroundColor: isSelected ? palette.accent : palette.accentSoft }]}>
                             <FontAwesomeIcon icon={faMusic} size={18} color={'white'} />
                         </View>
-                        <View style={{ flexDirection: 'column', gap: 5, alignContent: 'center', width: 220 }}>
+                        <View style={{ flexDirection: 'column', gap: 5, alignContent: 'center', flex: 1 }}>
                             <Text style={[styles.songName, { color: isSelected ? '#E82255' : themeColor }]} numberOfLines={1} ellipsizeMode="tail">{item.title}</Text>
                             <Text style={[styles.songInfo, { color: isSelected ? '#E82255' : dimColorTheme, fontSize: 10 }]} numberOfLines={1} ellipsizeMode="tail">
                                 {`${item.artist || 'Unknown Artist'} - ${item.album || 'Unknown Album'}`}
@@ -308,7 +310,7 @@ const ArtisBasedSongs = ({ route, navigation }) => {
                         </View>
                     </TouchableOpacity>
                     <TouchableOpacity style={{ padding: 8, borderRadius: 25 }} onPress={() => openBottomSheet(item)}>
-                        <FontAwesomeIcon icon={faEllipsisVertical} size={15} style={{ color: '#999', }} />
+                        <FontAwesomeIcon icon={faEllipsisVertical} size={15} style={{ color: palette.subtext, }} />
                     </TouchableOpacity>
                 </View>
 
@@ -318,18 +320,23 @@ const ArtisBasedSongs = ({ route, navigation }) => {
     };
 
     return (
-        <View style={{ flex: 1,backgroundColor:bgTheme }}>
-            <TouchableOpacity onPress={goBack} style={[styles.headerContainer, { backgroundColor: bgTheme,
-                 borderColor: isDarkMode ? Colors.darker : Colors.lighter }]}>
-                <FontAwesomeIcon icon={faArrowLeft} size={18} style={{ color: themeColor }} />
-                <Text style={[styles.headerText, { color: themeColor,textTransform:'capitalize' }]}>{artistName}</Text>
-            </TouchableOpacity>
+        <View style={{ flex: 1,backgroundColor: palette.background }}>
+            <View style={[styles.headerContainer, { backgroundColor: palette.surface, borderColor: palette.border }]}>
+                <TouchableOpacity onPress={goBack} style={[styles.backButton, { backgroundColor: palette.surfaceMuted }]}>
+                  <FontAwesomeIcon icon={faArrowLeft} size={18} style={{ color: themeColor }} />
+                </TouchableOpacity>
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.headerText, { color: themeColor,textTransform:'capitalize' }]}>{artistName}</Text>
+                  <Text style={{ color: palette.subtext, fontSize: 12 }}>{selectedArtistSongs.length} songs by this artist</Text>
+                </View>
+            </View>
 
             <FlatList
                 data={selectedArtistSongs}
                 renderItem={renderItem}
                 keyExtractor={(item, index) => index.toString()}
                 showsVerticalScrollIndicator={false}
+                contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 140 }}
             />
 
             <Modal
@@ -539,30 +546,26 @@ const styles = StyleSheet.create({
         flex: 1
     },
     headerContainer: {
-        display: 'flex',
         flexDirection: 'row',
-        justifyContent: 'start',
         alignItems: 'center',
-        padding: 15,
-        marginTop: 30,
-        borderBottomWidth: 1,
-
-
+        padding: 16,
+        marginTop: 18,
+        marginHorizontal: 16,
+        borderWidth: 1,
+        borderRadius: 24,
     },
+    backButton: { width: 42, height: 42, borderRadius: 14, alignItems: 'center', justifyContent: 'center', marginRight: 12 },
     headerText: {
-        fontSize: 18,
-        marginLeft: 20,
-        fontWeight: 'bold',
+        fontSize: 20,
+        fontWeight: '700',
     },
+    songRow: { flexDirection: 'row', gap: 5, padding: 12, alignItems: 'center', justifyContent: 'space-between', borderWidth: 1, borderRadius: 20 },
 
 
     musicIconContainer: {
-        width: 35,
-        height: 35,
-        borderRadius: 25,
-        padding: 8,
-        display: 'flex',
-        flexDirection: 'column',
+        width: 42,
+        height: 42,
+        borderRadius: 14,
         alignItems: 'center',
         justifyContent: 'center'
     },
