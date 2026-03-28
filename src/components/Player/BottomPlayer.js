@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import TextTicker from 'react-native-text-ticker';
 import { Colors } from 'react-native/Libraries/NewAppScreen';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import { faMusic, faPlay, faForwardStep, faPause } from '@fortawesome/free-solid-svg-icons';
+import { faMusic, faPlay, faForwardStep, faPause, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { useDispatch, useSelector } from 'react-redux'
 import { selectedSong, setIsSongPlaying } from '../../redux/action';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -34,6 +34,7 @@ const BottomPlayer = () => {
     const dimColorTheme = isDarkMode ? Colors.light : Colors.darker;
     const [isPlayerReady, setPlayerReady] = useState(false);
     const [playerInitialized, setPlayerInitialized] = useState(false);
+    const [isHidden, setIsHidden] = useState(false);
 
     // make sure the TrackPlayer has been initialized before any operations
     const ensurePlayerInitialized = async () => {
@@ -126,13 +127,28 @@ const BottomPlayer = () => {
 
 
     useEffect(() => {
-        if (isPlayerReady && selected !== null) {
-            const index = Songs.findIndex(item => item.url === selected.url);
-            if (index !== -1) {
-                TrackPlayer.skip(index);
+        const syncSelectedTrack = async () => {
+            if (!isPlayerReady || selected === null) {
+                return;
             }
-        }
+            try {
+                const queue = await TrackPlayer.getQueue();
+                const index = queue.findIndex(item => item.url === selected.url);
+                if (index !== -1) {
+                    await TrackPlayer.skip(index);
+                }
+            } catch (error) {
+                console.error('Failed to sync selected track', error);
+            }
+        };
+        syncSelectedTrack();
     }, [isPlayerReady, selected, Songs]);
+
+    useEffect(() => {
+        if (selected && selected.url) {
+            setIsHidden(false);
+        }
+    }, [selected]);
 
 
     const handleNextSong = async () => {
@@ -162,6 +178,18 @@ const BottomPlayer = () => {
             console.error('playPause failed:', err);
         }
     }
+
+    const closePlayer = async () => {
+        try {
+            await ensurePlayerInitialized();
+            await TrackPlayer.pause();
+            dispatch(setIsSongPlaying(false));
+            setIsHidden(true);
+        } catch (error) {
+            console.error('closePlayer failed:', error);
+        }
+    };
+
     const storeSelectedSong = async (song) => {
         try {
             if (song) {
@@ -198,15 +226,19 @@ const BottomPlayer = () => {
         outputRange: ['0deg', '360deg'],
     });
 
+    if (isHidden || !selected) {
+        return null;
+    }
+
     return (
         <SafeAreaView style={{}}>
             <View style={[styles.bottomPlayer, { backgroundColor: bgTheme, borderColor: palette.border, shadowColor: palette.shadow }]}>
-                <TouchableOpacity style={{ flexDirection: 'row', gap: 10, alignItems: 'center', width: 160 }} onPress={toggleModal}>
+                <TouchableOpacity style={{ flexDirection: 'row', gap: 10, alignItems: 'center', flex: 1, minWidth: 0 }} onPress={toggleModal}>
                     <Animated.View style={[styles.rotateMusicIconContainer, { backgroundColor: palette.accent, transform: [{ rotate: spin }] }]}>
                         <FontAwesomeIcon icon={faMusic} size={18} color='white' />
                     </Animated.View>
                     {selected !== null ? (
-                        <View>
+                        <View style={{ flex: 1 }}>
                             <TextTicker numberOfLines={1} style={[styles.songName, { color: themeColor }]} ellipsizeMode="tail" scrollSpeed={50}>
                                 {selected.title}
                             </TextTicker>
@@ -216,14 +248,16 @@ const BottomPlayer = () => {
                         <Text>No music item selected</Text>
 
                     )}
-
                 </TouchableOpacity>
-                <View style={{ flexDirection: 'row', gap: 4, alignItems: 'flex-end' }}>
+                <View style={{ flexDirection: 'row', gap: 4, alignItems: 'center' }}>
                     <TouchableOpacity onPress={() => playPause()} style={[styles.controls, { backgroundColor: palette.surfaceMuted }]}>
                         <FontAwesomeIcon icon={isSongPlaying === true ? faPause : faPlay} size={18} style={{ color: themeColor, alignSelf: 'center' }} />
                     </TouchableOpacity>
                     <TouchableOpacity onPress={handleNextSong} style={[styles.controls, { backgroundColor: palette.accent }]}>
                         <FontAwesomeIcon icon={faForwardStep} size={18} style={{ color: '#fff' }} />
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={closePlayer} style={[styles.controls, { backgroundColor: palette.surfaceMuted }]}>
+                        <FontAwesomeIcon icon={faTimes} size={16} style={{ color: themeColor }} />
                     </TouchableOpacity>
                 </View>
             </View>

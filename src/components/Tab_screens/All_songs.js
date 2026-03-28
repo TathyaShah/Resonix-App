@@ -19,6 +19,7 @@ import {
   faHeart, faMusic, faEllipsisVertical,
   faTimes,
   faPlay,
+  faShuffle,
   faShareAlt, faInfoCircle, faTrashCan
 } from '@fortawesome/free-solid-svg-icons';
 import { useDispatch, useSelector } from 'react-redux'
@@ -144,6 +145,32 @@ const All_songs = (props) => {
     }
 
   }
+
+  const shuffleSongs = async () => {
+    try {
+      if (!Songs.length) {
+        return;
+      }
+      const shuffledSongs = [...Songs]
+        .map(song => ({ song, sortKey: Math.random() }))
+        .sort((a, b) => a.sortKey - b.sortKey)
+        .map(item => item.song);
+      const firstSong = shuffledSongs[0];
+
+      await TrackPlayer.stop();
+      await TrackPlayer.reset();
+      await TrackPlayer.add(shuffledSongs);
+      await TrackPlayer.skip(0);
+      dispatch(selectedSong(firstSong));
+      await storeSelectedSong(firstSong);
+      dispatch(setIsSongPlaying(true));
+      await TrackPlayer.play();
+      updateRecent(firstSong);
+    } catch (error) {
+      console.error('Shuffle failed', error);
+      ToastAndroid.show('Unable to shuffle songs.', ToastAndroid.SHORT);
+    }
+  };
   const getSelectedSong = async () => {
     try {
       const lastPlayedSong = await AsyncStorage.getItem('lastPlayedSong');
@@ -441,10 +468,16 @@ const All_songs = (props) => {
               <Text style={{ color: palette.success, fontSize: 12, fontWeight: '700' }}>Refresh</Text>
             </TouchableOpacity>
           </View>
-          <TouchableOpacity style={[styles.playAllButton, { backgroundColor: palette.accent }]} onPress={playAllSongs}>
-            <FontAwesomeIcon icon={faPlay} size={12} style={{ color: 'white' }} />
-            <Text style={styles.playAllText}>Play All</Text>
-          </TouchableOpacity>
+          <View style={styles.actionRow}>
+            <TouchableOpacity style={[styles.playAllButton, { backgroundColor: palette.accent }]} onPress={playAllSongs}>
+              <FontAwesomeIcon icon={faPlay} size={12} style={{ color: 'white' }} />
+              <Text style={styles.playAllText}>Play All</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.playAllButton, { backgroundColor: palette.surfaceMuted }]} onPress={shuffleSongs}>
+              <FontAwesomeIcon icon={faShuffle} size={12} style={{ color: palette.text }} />
+              <Text style={[styles.playAllText, { color: palette.text }]}>Shuffle</Text>
+            </TouchableOpacity>
+          </View>
         </View>
         <View style={[styles.musicContainer, { backgroundColor: palette.background }]}>
           <FlatList
@@ -700,6 +733,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     flexDirection: 'row',
     gap: 8,
+    flex: 1,
+  },
+  actionRow: {
+    flexDirection: 'row',
+    gap: 10,
   },
   playAllText: {
     color: '#fff',

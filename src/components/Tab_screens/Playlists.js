@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
 import useResonixTheme from '../../hooks/useResonixTheme';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import { faChevronRight, faCompactDisc } from '@fortawesome/free-solid-svg-icons';
+import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
 
 // simple placeholder listing playlists; favorites included
 const Playlists = ({ navigation }) => {
@@ -18,15 +18,6 @@ const Playlists = ({ navigation }) => {
   };
   return (
     <View style={[styles.container, { backgroundColor: palette.background }]}> 
-      <View style={[styles.heroCard, { backgroundColor: palette.surface, borderColor: palette.border }]}>
-        <View style={[styles.iconWrap, { backgroundColor: palette.accentSoft }]}>
-          <FontAwesomeIcon icon={faCompactDisc} size={16} color={palette.accent} />
-        </View>
-        <Text style={[styles.title, { color: palette.text }]}>Playlists</Text>
-        <Text style={[styles.subtitle, { color: palette.subtext }]}>
-          Keep your go-to collections organized in one place.
-        </Text>
-      </View>
       <FlatList
         data={dummy}
         contentContainerStyle={styles.list}
@@ -44,10 +35,6 @@ const Playlists = ({ navigation }) => {
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 16 },
-  heroCard: { borderWidth: 1, borderRadius: 24, padding: 18, marginBottom: 14 },
-  iconWrap: { width: 36, height: 36, borderRadius: 12, alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
-  title: { fontSize: 22, fontWeight: '700', marginBottom: 4 },
-  subtitle: { fontSize: 13, lineHeight: 18 },
   list: { paddingBottom: 120 },
   row: {
     paddingHorizontal: 16,

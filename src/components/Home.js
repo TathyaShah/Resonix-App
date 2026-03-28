@@ -14,9 +14,8 @@ import { useNavigation } from '@react-navigation/native';
 import { useDispatch } from 'react-redux';
 import { selectedSong, setIsSongPlaying } from '../redux/action';
 import TrackPlayer from 'react-native-track-player';
-import LinearGradient from 'react-native-linear-gradient';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import { faClockRotateLeft, faHeadphones, faSparkles } from '@fortawesome/free-solid-svg-icons';
+import { faChevronRight, faHeadphones } from '@fortawesome/free-solid-svg-icons';
 
 // Home shows a recently played carousel
 const Home = () => {
@@ -87,24 +86,6 @@ const Home = () => {
       contentContainerStyle={styles.container}
       showsVerticalScrollIndicator={false}
     >
-      <LinearGradient
-        colors={palette.isDarkMode ? ['#1A1020', '#090A0F'] : ['#FFF3F7', '#FFFFFF']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={[styles.heroCard, { borderColor: palette.border }]}
-      >
-        <View style={styles.heroHeader}>
-          <View style={[styles.heroIcon, { backgroundColor: palette.accentSoft }]}>
-            <FontAwesomeIcon icon={faSparkles} size={16} color={palette.accent} />
-          </View>
-          <Text style={[styles.heroEyebrow, { color: palette.subtext }]}>For today</Text>
-        </View>
-        <Text style={[styles.heroTitle, { color: palette.text }]}>Find the right mood faster.</Text>
-        <Text style={[styles.heroSubtitle, { color: palette.subtext }]}>
-          Jump into vibes, rediscover your recents, and keep listening without friction.
-        </Text>
-      </LinearGradient>
-
       <View style={[styles.sectionCard, { backgroundColor: palette.surface, borderColor: palette.border }]}>
         <View style={styles.sectionHeaderRow}>
           <Text style={[styles.sectionTitle, { color: palette.text }]}>What&apos;s your mood?</Text>
@@ -136,15 +117,16 @@ const Home = () => {
       <View style={[styles.sectionCard, { backgroundColor: palette.surface, borderColor: palette.border }]}>
         <View style={styles.header}>
           <View style={styles.sectionHeaderRow}>
-            <Text style={[styles.headerText, { color: palette.text }]}>Recently Played</Text>
-            <View style={[styles.badge, { backgroundColor: palette.surfaceMuted }]}>
-              <FontAwesomeIcon icon={faClockRotateLeft} size={12} color={palette.accent} />
-              <Text style={[styles.badgeText, { color: palette.subtext }]}>{recent.length} tracks</Text>
+            <View style={styles.recentTitleWrap}>
+              <Text style={[styles.headerText, { color: palette.text }]}>Recently Played</Text>
+              <View style={[styles.counterBadge, { backgroundColor: palette.accent }]}>
+                <Text style={styles.counterText}>{recent.length}</Text>
+              </View>
             </View>
+            <TouchableOpacity onPress={() => navigation.navigate('RecentHistory')} style={styles.recentArrow}>
+              <FontAwesomeIcon icon={faChevronRight} size={16} color={palette.accent} />
+            </TouchableOpacity>
           </View>
-          <TouchableOpacity onPress={() => navigation.navigate('RecentHistory')}>
-            <Text style={{ color: palette.accent, fontWeight: '600' }}>Show All</Text>
-          </TouchableOpacity>
         </View>
         <FlatList
           data={recent}
@@ -152,6 +134,7 @@ const Home = () => {
           showsHorizontalScrollIndicator={false}
           keyExtractor={(item, idx) => item.url + idx}
           renderItem={renderItem}
+          contentContainerStyle={styles.recentListContent}
           ListEmptyComponent={
             <View style={[styles.emptyCard, { backgroundColor: palette.surfaceMuted, borderColor: palette.border }]}>
               <Text style={[styles.emptyTitle, { color: palette.text }]}>No recent tracks yet</Text>
@@ -172,38 +155,6 @@ const styles = StyleSheet.create({
     paddingBottom: 140,
     gap: 16,
   },
-  heroCard: {
-    borderWidth: 1,
-    borderRadius: 28,
-    padding: 20,
-  },
-  heroHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 14,
-  },
-  heroIcon: {
-    width: 34,
-    height: 34,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 10,
-  },
-  heroEyebrow: {
-    fontSize: 12,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-  },
-  heroTitle: {
-    fontSize: 28,
-    fontWeight: '700',
-    marginBottom: 8,
-  },
-  heroSubtitle: {
-    fontSize: 13,
-    lineHeight: 20,
-  },
   sectionCard: {
     borderWidth: 1,
     borderRadius: 24,
@@ -212,6 +163,30 @@ const styles = StyleSheet.create({
   header: {
     justifyContent: 'space-between',
     gap: 14,
+  },
+  recentTitleWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  counterBadge: {
+    minWidth: 24,
+    height: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 6,
+  },
+  counterText: {
+    color: '#fff',
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  recentArrow: {
+    width: 32,
+    height: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   sectionHeaderRow: {
     flexDirection: 'row',
@@ -240,6 +215,7 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     justifyContent: 'space-between',
     marginTop: 14,
+    rowGap: 10,
   },
   moodCard: {
     width: '48%',
@@ -248,7 +224,6 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     borderWidth: 1,
     padding: 12,
-    marginBottom: 10,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'flex-start',
@@ -262,6 +237,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   card: { width: 126, marginRight: 12 },
+  recentListContent: { paddingTop: 8 },
   thumb: { width: 126, height: 126, backgroundColor: '#444', borderRadius: 18 },
   title: { marginTop: 8, fontSize: 13, fontWeight: '600' },
   subtitle: { fontSize: 11, marginTop: 4 },
