@@ -138,11 +138,11 @@ const FavSongs = ({ navigation }) => {
           >
             <SongThumbnail song={item} size={42} radius={14} textSize={16} />
             <View style={{ flexDirection: 'column', gap: 5, alignContent: 'center', flex: 1 }}>
-              <Text style={[styles.songName, { color: isSelected ? '#E82255' : themeColor }]} numberOfLines={1} ellipsizeMode="tail">{item.title}</Text>
+              <Text style={[styles.songName, { color: isSelected ? palette.accent : themeColor }]} numberOfLines={1} ellipsizeMode="tail">{item.title}</Text>
               <View style={[styles.songInfo, { flexDirection: 'row', gap: 4, alignItems: 'center' }]}>
-                <Text style={{ color: isSelected ? '#E82255' : dimColorTheme, fontSize: 10 }}>{item.artist}</Text>
-                <Text style={{ color: isSelected ? '#E82255' : dimColorTheme, fontSize: 10 }}>-</Text>
-                <Text style={{ color: isSelected ? '#E82255' : dimColorTheme, fontSize: 10 }}>{item.album}</Text>
+                <Text style={{ color: isSelected ? palette.accent : dimColorTheme, fontSize: 10 }}>{item.artist}</Text>
+                <Text style={{ color: isSelected ? palette.accent : dimColorTheme, fontSize: 10 }}>-</Text>
+                <Text style={{ color: isSelected ? palette.accent : dimColorTheme, fontSize: 10 }}>{item.album}</Text>
               </View>
             </View>
           </TouchableOpacity>
@@ -181,12 +181,12 @@ const FavSongs = ({ navigation }) => {
         ) : (
 
           <View style={[styles.emptyCard, { backgroundColor: palette.surface, borderColor: palette.border }]}>
-            <View style={{ backgroundColor: '#E82255', padding: 10, borderRadius: 50 }}>
+            <View style={{ backgroundColor: palette.accent, padding: 10, borderRadius: 50 }}>
               <FontAwesomeIcon icon={faMusic} size={30} color='white' />
             </View>
             <Text style={{ color: palette.text, fontSize: 18, fontWeight: '700' }}>No songs yet</Text>
-            <TouchableOpacity style={{ color: '#E82255' }} onPress={addMoreSongs}>
-              <Text style={{ color: '#E82255' }}>Add Songs</Text>
+            <TouchableOpacity style={{ color: palette.accent }} onPress={addMoreSongs}>
+              <Text style={{ color: palette.accent }}>Add Songs</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -230,7 +230,7 @@ const FavSongs = ({ navigation }) => {
                   </TouchableOpacity>
 
                   <TouchableOpacity style={{ flexDirection: 'row', gap: 15, justifyContent: 'center', alignItems: 'center', padding: 15 }} onPress={removeFromfav}>
-                    <Text style={{ color: '#E82255', fontSize: 16, }}>Remove from favourite</Text>
+                    <Text style={{ color: palette.accent, fontSize: 16, }}>Remove from favourite</Text>
                   </TouchableOpacity>
 
                   <TouchableOpacity style={{ flexDirection: 'row', gap: 15, justifyContent: 'center', alignItems: 'center', padding: 15 }} onPress={() => setopenRemovefromFav(false)}>

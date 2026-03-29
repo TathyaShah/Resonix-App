@@ -423,7 +423,7 @@ const All_songs = (props) => {
           >
             <SongThumbnail song={item} size={42} radius={14} textSize={16} />
             <View style={{ flex: 1, alignContent: 'center', justifyContent: 'center', minWidth: 0 }}>
-              <Text style={[styles.songName, { color: isSelected ? '#E82255' : themeColor }]} numberOfLines={1} ellipsizeMode="tail">
+              <Text style={[styles.songName, { color: isSelected ? palette.accent : themeColor }]} numberOfLines={1} ellipsizeMode="tail">
                 {item.title}
               </Text>
               {isSelected ? (
@@ -520,7 +520,7 @@ const All_songs = (props) => {
                 <View style={{ backgroundColor: '#999', width: 40, borderRadius: 5, height: 5, alignSelf: 'center', marginBottom: 20 }}></View>
                 <View style={{ flexDirection: 'column', gap: 15 }} >
                   <TouchableOpacity style={{ flexDirection: 'row', gap: 15, justifyContent: 'center', alignItems: 'center', padding: 15 }} onPress={deleteSongfromLocal}>
-                    <Text style={{ color: '#E82255', fontSize: 16, }}>Delete local file</Text>
+                    <Text style={{ color: palette.accent, fontSize: 16, }}>Delete local file</Text>
                   </TouchableOpacity>
 
                   <TouchableOpacity style={{ flexDirection: 'row', gap: 15, justifyContent: 'center', alignItems: 'center', padding: 15 }} onPress={() => setOpenDeleteSongmodal(false)}>
@@ -602,8 +602,8 @@ const All_songs = (props) => {
                   </TouchableOpacity>
 
                   <TouchableOpacity style={{ flexDirection: 'row', gap: 15, alignItems: 'center', padding: 10 }} onPress={() => setOptionModalVisible(false)}>
-                    <FontAwesomeIcon icon={faTimes} size={16} style={{ color: '#E82255' }} />
-                    <Text style={{ color: '#E82255', fontSize: 14 }}>Close </Text>
+                    <FontAwesomeIcon icon={faTimes} size={16} style={{ color: palette.accent }} />
+                    <Text style={{ color: palette.accent, fontSize: 14 }}>Close </Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -652,7 +652,7 @@ const All_songs = (props) => {
             }}  >
 
               <View style={{ backgroundColor: '#999', width: 40, borderRadius: 5, height: 5, alignSelf: 'center', marginBottom: 20 }}></View>
-              <Text style={{ color: '#E82255', fontSize: 16, fontWeight: 'bold', marginBottom: 20 }}>Information</Text>
+              <Text style={{ color: palette.accent, fontSize: 16, fontWeight: 'bold', marginBottom: 20 }}>Information</Text>
               {songItem &&
                 <View style={{ flexDirection: 'column', gap: 15, marginTop: 10, }}  {...panResponder.panHandlers}>
 

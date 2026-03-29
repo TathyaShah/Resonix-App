@@ -6,7 +6,9 @@ const useTheme = () => {
   const isDarkMode = context ? context.isDarkMode : false;
   const appTheme = context ? context.appTheme : 'system';
   const effectiveTheme = context ? context.effectiveTheme : 'light';
-  return { isDarkMode, appTheme, effectiveTheme };
+  const colorTheme = context ? context.colorTheme : 'red';
+  const useDefaultColorTheme = context ? context.useDefaultColorTheme : true;
+  return { isDarkMode, appTheme, effectiveTheme, colorTheme, useDefaultColorTheme };
 };
 
 export default useTheme;

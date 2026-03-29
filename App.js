@@ -32,9 +32,26 @@ export const AppContext = createContext();
 const App = () => {
   const systemColorScheme = useColorScheme();
   const [appTheme, setAppTheme] = useState('system');
+  const [colorTheme, setColorTheme] = useState('red');
+  const [useDefaultColorTheme, setUseDefaultColorTheme] = useState(true);
 
   const isDarkMode = appTheme === 'system' ? systemColorScheme === 'dark' : appTheme === 'dark';
-  const theme = isDarkMode ? DarkTheme : DefaultTheme;
+  const themeBase = isDarkMode ? DarkTheme : DefaultTheme;
+  const theme = {
+    ...themeBase,
+    colors: {
+      ...themeBase.colors,
+      primary: useDefaultColorTheme
+        ? '#E82255'
+        : colorTheme === 'sunset'
+          ? '#F57C00'
+          : colorTheme === 'green'
+            ? '#2E7D32'
+            : colorTheme === 'blue'
+              ? '#1565C0'
+              : '#E53935',
+    },
+  };
   const effectiveTheme = isDarkMode ? 'dark' : 'light';
 
   const dispatch = useDispatch()
@@ -47,8 +64,16 @@ const App = () => {
   useEffect(() => {
     const loadTheme = async () => {
       try {
-        const storedTheme = await AsyncStorage.getItem('appTheme');
+        const [storedTheme, storedColorTheme, storedUseDefaultColorTheme] = await Promise.all([
+          AsyncStorage.getItem('appTheme'),
+          AsyncStorage.getItem('colorTheme'),
+          AsyncStorage.getItem('useDefaultColorTheme'),
+        ]);
         if (storedTheme) setAppTheme(storedTheme);
+        if (storedColorTheme) setColorTheme(storedColorTheme);
+        if (storedUseDefaultColorTheme !== null) {
+          setUseDefaultColorTheme(storedUseDefaultColorTheme === 'true');
+        }
       } catch (e) {
         console.error('Failed to load theme', e);
       }
@@ -178,7 +203,19 @@ const App = () => {
 
 
   return (
-    <AppContext.Provider value={{ fetechAllSongs, appTheme, setAppTheme, effectiveTheme, isDarkMode }}>
+    <AppContext.Provider
+      value={{
+        fetechAllSongs,
+        appTheme,
+        setAppTheme,
+        effectiveTheme,
+        isDarkMode,
+        colorTheme,
+        setColorTheme,
+        useDefaultColorTheme,
+        setUseDefaultColorTheme,
+      }}
+    >
       <View style={{ flex: 1, backgroundColor: isDarkMode ? '#000' : '#fff' }}>
         <StatusBar translucent backgroundColor="transparent"
           barStyle={isDarkMode ? 'light-content' : 'dark-content'}

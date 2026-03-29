@@ -1,4 +1,4 @@
-import React, { useCallback, useContext, useMemo, useState } from 'react';
+import React, { useCallback, useContext, useState } from 'react';
 import {
   Alert,
   Platform,
@@ -35,6 +35,7 @@ import {
 import { useSelector, useDispatch } from 'react-redux';
 import { AppContext } from '../../App';
 import { setFavouritesSongs } from '../redux/action';
+import useResonixTheme from '../hooks/useResonixTheme';
 
 const THEME_OPTIONS = [
   { key: 'light', label: 'Light' },
@@ -42,32 +43,33 @@ const THEME_OPTIONS = [
   { key: 'system', label: 'System' },
 ];
 
+const COLOR_THEME_OPTIONS = [
+  { key: 'sunset', label: 'Sunset', color: '#F57C00' },
+  { key: 'green', label: 'Green', color: '#2E7D32' },
+  { key: 'red', label: 'Red', color: '#E53935' },
+  { key: 'blue', label: 'Blue', color: '#1565C0' },
+];
+
 const Account = () => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
-  const { appTheme, setAppTheme, isDarkMode, fetechAllSongs } = useContext(AppContext);
+  const {
+    appTheme,
+    setAppTheme,
+    colorTheme,
+    setColorTheme,
+    useDefaultColorTheme,
+    setUseDefaultColorTheme,
+    fetechAllSongs,
+  } = useContext(AppContext);
   const allSongs = useSelector(state => state.allSongsReducer);
+  const palette = useResonixTheme();
   const [name, setName] = useState('');
   const [recentCount, setRecentCount] = useState(0);
   const [favCount, setFavCount] = useState(0);
   const [autoScan, setAutoScan] = useState(true);
   const [isRefreshingLibrary, setIsRefreshingLibrary] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
-
-  const palette = useMemo(
-    () => ({
-      background: isDarkMode ? '#050507' : '#F5F6FA',
-      card: isDarkMode ? '#111318' : '#FFFFFF',
-      cardMuted: isDarkMode ? '#171A20' : '#F0F2F7',
-      border: isDarkMode ? '#1F2430' : '#E3E7EF',
-      text: isDarkMode ? '#F9FAFC' : '#11131A',
-      subtext: isDarkMode ? '#9FA6B5' : '#657085',
-      accent: '#E82255',
-      accentSoft: isDarkMode ? 'rgba(232,34,85,0.18)' : '#FFE6ED',
-      input: isDarkMode ? '#0D1015' : '#F8F9FC',
-    }),
-    [isDarkMode],
-  );
 
   const notify = useCallback(message => {
     if (Platform.OS === 'android') {
@@ -222,14 +224,22 @@ const Account = () => {
           style: 'destructive',
           onPress: async () => {
             try {
-              await AsyncStorage.multiRemove(['profileName', 'appTheme', 'libraryAutoScan']);
+                await AsyncStorage.multiRemove([
+                  'profileName',
+                  'appTheme',
+                  'libraryAutoScan',
+                  'colorTheme',
+                  'useDefaultColorTheme',
+                ]);
               setName('');
               setIsEditingName(true);
               setAutoScan(true);
-              if (setAppTheme) {
-                setAppTheme('system');
-              }
-              notify('Account preferences reset.');
+                if (setAppTheme) {
+                  setAppTheme('system');
+                }
+                setColorTheme?.('red');
+                setUseDefaultColorTheme?.(true);
+                notify('Account preferences reset.');
             } catch (error) {
               console.error('Failed to reset preferences', error);
             }
@@ -237,7 +247,7 @@ const Account = () => {
         },
       ],
     );
-  }, [notify, setAppTheme]);
+  }, [notify, setAppTheme, setColorTheme, setUseDefaultColorTheme]);
 
   const shareApp = useCallback(async () => {
     try {
@@ -249,6 +259,32 @@ const Account = () => {
       console.error('Failed to share app', error);
     }
   }, []);
+
+  const changeColorTheme = useCallback(
+    async nextColorTheme => {
+      try {
+        setColorTheme?.(nextColorTheme);
+        await AsyncStorage.setItem('colorTheme', nextColorTheme);
+        notify(`${nextColorTheme.charAt(0).toUpperCase() + nextColorTheme.slice(1)} theme applied.`);
+      } catch (error) {
+        console.error('Failed to change color theme', error);
+      }
+    },
+    [notify, setColorTheme],
+  );
+
+  const handleDefaultThemeToggle = useCallback(
+    async value => {
+      try {
+        setUseDefaultColorTheme?.(value);
+        await AsyncStorage.setItem('useDefaultColorTheme', String(value));
+        notify(value ? 'Default theme enabled.' : 'Custom themes enabled.');
+      } catch (error) {
+        console.error('Failed to update default theme toggle', error);
+      }
+    },
+    [notify, setUseDefaultColorTheme],
+  );
 
   const displayName = name || 'Your profile';
   const hasSavedName = Boolean(name.trim());
@@ -266,7 +302,7 @@ const Account = () => {
       value: `${allSongs.length}`,
       helper: 'songs',
       icon: faMusic,
-      accent: '#6D5EF7',
+      accent: palette.secondary,
     },
     {
       key: 'favourites',
@@ -274,7 +310,7 @@ const Account = () => {
       value: `${favCount}`,
       helper: 'saved',
       icon: faHeart,
-      accent: '#E82255',
+      accent: palette.accent,
       onPress: () => navigation.navigate('Favourites'),
     },
     {
@@ -283,7 +319,7 @@ const Account = () => {
       value: `${recentCount}`,
       helper: 'played',
       icon: faClockRotateLeft,
-      accent: '#35C48C',
+      accent: palette.tertiary,
       onPress: () => navigation.navigate('RecentHistory'),
     },
   ];
@@ -336,7 +372,7 @@ const Account = () => {
       showsVerticalScrollIndicator={false}
     >
       <LinearGradient
-        colors={isDarkMode ? ['#1A1020', '#090A0F'] : ['#FFF3F7', '#FFFFFF']}
+        colors={palette.heroGradient}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={[styles.heroCard, { borderColor: palette.border }]}
@@ -344,7 +380,7 @@ const Account = () => {
         <View style={styles.heroTopRow}>
           <View style={styles.avatarWrap}>
             <LinearGradient
-              colors={['#FF5E85', '#E82255']}
+              colors={[palette.secondary, palette.accent]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={styles.avatar}
@@ -528,6 +564,76 @@ const Account = () => {
             <FontAwesomeIcon icon={faPaintBrush} size={14} color={palette.accent} />
           </View>
           <View style={styles.sectionHeaderText}>
+            <Text style={[styles.sectionTitle, { color: palette.text }]}>Themes</Text>
+            <Text style={[styles.sectionSubtitle, { color: palette.subtext }]}>
+              Change the app&apos;s color system across all screens.
+            </Text>
+          </View>
+        </View>
+
+        <View style={styles.colorThemeGrid}>
+          <View
+            style={[
+              styles.preferenceRow,
+              { backgroundColor: palette.cardMuted, borderColor: palette.border, width: '100%' },
+            ]}
+          >
+            <View style={styles.preferenceTextWrap}>
+              <Text style={[styles.listRowTitle, { color: palette.text }]}>Show default theme</Text>
+              <Text style={[styles.listRowSubtitle, { color: palette.subtext }]}>
+                Keep the original pink Resonix colors.
+              </Text>
+            </View>
+            <Switch
+              value={useDefaultColorTheme}
+              onValueChange={handleDefaultThemeToggle}
+              trackColor={{ false: '#8E97A8', true: palette.accentSoft }}
+              thumbColor={useDefaultColorTheme ? palette.accent : '#F7F8FB'}
+            />
+          </View>
+
+          {!useDefaultColorTheme
+            ? COLOR_THEME_OPTIONS.map(option => {
+                const active = colorTheme === option.key;
+
+                return (
+                  <TouchableOpacity
+                    key={option.key}
+                    activeOpacity={0.9}
+                    onPress={() => changeColorTheme(option.key)}
+                    style={[
+                      styles.colorThemeCard,
+                      {
+                        backgroundColor: palette.cardMuted,
+                        borderColor: active ? palette.accent : palette.border,
+                      },
+                    ]}
+                  >
+                    <View style={[styles.colorSwatch, { backgroundColor: option.color }]} />
+                    <Text style={[styles.colorThemeLabel, { color: palette.text }]}>
+                      {option.label}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })
+            : null}
+        </View>
+      </View>
+
+      <View
+        style={[
+          styles.sectionCard,
+          {
+            backgroundColor: palette.card,
+            borderColor: palette.border,
+          },
+        ]}
+      >
+        <View style={styles.sectionHeader}>
+          <View style={[styles.sectionIconWrap, { backgroundColor: palette.accentSoft }]}>
+            <FontAwesomeIcon icon={faPaintBrush} size={14} color={palette.accent} />
+          </View>
+          <View style={styles.sectionHeaderText}>
             <Text style={[styles.sectionTitle, { color: palette.text }]}>Appearance</Text>
             <Text style={[styles.sectionSubtitle, { color: palette.subtext }]}>
               Match Resonix with your preferred look and feel.
@@ -601,7 +707,7 @@ const Account = () => {
           <Switch
             value={autoScan}
             onValueChange={handleAutoScanToggle}
-            trackColor={{ false: '#8E97A8', true: '#F39AB0' }}
+            trackColor={{ false: '#8E97A8', true: palette.accentSoft }}
             thumbColor={autoScan ? palette.accent : '#F7F8FB'}
           />
         </View>
@@ -923,6 +1029,31 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     borderRadius: 18,
     padding: 6,
+  },
+  colorThemeGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    rowGap: 12,
+  },
+  colorThemeCard: {
+    width: '48%',
+    minHeight: 82,
+    borderWidth: 1,
+    borderRadius: 18,
+    paddingHorizontal: 14,
+    paddingVertical: 14,
+    justifyContent: 'center',
+  },
+  colorSwatch: {
+    width: 34,
+    height: 34,
+    borderRadius: 12,
+    marginBottom: 10,
+  },
+  colorThemeLabel: {
+    fontSize: 14,
+    fontWeight: '600',
   },
   themePill: {
     flex: 1,

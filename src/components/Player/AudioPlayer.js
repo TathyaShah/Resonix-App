@@ -306,9 +306,9 @@ const AudioPlayer = () => {
                             style={{ width: '100%' }}
                             minimumValue={0}
                             maximumValue={duration}
-                            minimumTrackTintColor="#E82255"
+                            minimumTrackTintColor={palette.accent}
                             maximumTrackTintColor={palette.subtext}
-                            thumbTintColor="#E82255"
+                            thumbTintColor={palette.accent}
                             value={position}
                             onSlidingComplete={onSlidingComplete}
                         />

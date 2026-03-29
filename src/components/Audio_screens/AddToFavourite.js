@@ -156,7 +156,7 @@ const AddToFavourites = (props) => {
                         placeholderTextColor="#999"
                         onChangeText={handleSearch}
                         value={searchQuery}
-                        cursorColor={'#E82255'}
+                        cursorColor={palette.accent}
                     />
                 </View>
 

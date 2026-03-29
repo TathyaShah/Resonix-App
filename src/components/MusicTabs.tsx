@@ -30,42 +30,32 @@ const MusicTabs = () => {
           tabBarActiveTintColor: palette.accent,
           tabBarLabelStyle: styles.tabBarLabel,
           tabBarItemStyle: { width: 'auto', left: -15 },
+          tabBarIndicatorStyle: {
+            backgroundColor: palette.accent,
+            height: 3,
+            borderRadius: 999,
+          },
         }}
       >
         <TopTab.Screen
           name="Songs"
           component={All_songs}
-          options={{
-            tabBarIndicatorStyle: styles.tabBarIndicator,
-          }}
         />
         <TopTab.Screen
           name="Artist"
           component={Artist}
-          options={{
-            tabBarIndicatorStyle: styles.tabBarIndicator,
-          }}
         />
         <TopTab.Screen
           name="Album"
           component={Album}
-          options={{
-            tabBarIndicatorStyle: styles.tabBarIndicator,
-          }}
         />
         <TopTab.Screen
           name="Favourites"
           component={FavSongs}
-          options={{
-            tabBarIndicatorStyle: styles.tabBarIndicator,
-          }}
         />
         <TopTab.Screen
           name="Playlists"
           component={Playlists}
-          options={{
-            tabBarIndicatorStyle: styles.tabBarIndicator,
-          }}
         />
       </TopTab.Navigator>
     </View>
@@ -73,11 +63,6 @@ const MusicTabs = () => {
 };
 
 const styles = StyleSheet.create({
-  tabBarIndicator: {
-    backgroundColor: '#E82255',
-    height: 3,
-    borderRadius: 999,
-  },
   tabBarLabel: {
     textTransform: 'capitalize',
     fontWeight: '700',
