@@ -16,7 +16,6 @@ import useResonixTheme from '../../hooks/useResonixTheme';
 import { Colors } from 'react-native/Libraries/NewAppScreen';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import {
-    faMusic,
     faArrowLeft,
     faSearch,
 } from '@fortawesome/free-solid-svg-icons';
@@ -25,6 +24,7 @@ import { setFavouritesSongs } from '../../redux/action';
 import { useDispatch, useSelector } from 'react-redux'
 import { faHeart as solidHeart } from '@fortawesome/free-solid-svg-icons';
 import { faHeart as regularHeart } from '@fortawesome/free-regular-svg-icons';
+import SongThumbnail from '../SongThumbnail';
 
 const AddToFavourites = (props) => {
     const { isDarkMode } = useTheme();
@@ -107,9 +107,7 @@ const AddToFavourites = (props) => {
                         style={{ flexDirection: 'row', gap: 12, alignItems: 'center', flex: 1 }}
 
                     >
-                        <View style={[styles.musicIconContainer, { backgroundColor: palette.accentSoft }]}>
-                            <FontAwesomeIcon icon={faMusic} size={18} color={'white'} />
-                        </View>
+                        <SongThumbnail song={item} size={42} radius={14} textSize={16} />
                         <View style={{ flexDirection: 'column', gap: 5, alignContent: 'center', flex: 1 }}>
                             <Text style={[styles.songName, { color: themeColor }]} numberOfLines={1} ellipsizeMode="tail">{item.title}</Text>
                             <View style={[styles.songInfo, { flexDirection: 'row', gap: 4, alignItems: 'center' }]}>
@@ -222,13 +220,6 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         borderRadius: 20,
         borderWidth: 1,
-    },
-    musicIconContainer: {
-        width: 42,
-        height: 42,
-        borderRadius: 14,
-        alignItems: 'center',
-        justifyContent: 'center'
     },
 });
 

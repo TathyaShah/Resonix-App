@@ -29,6 +29,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AppContext } from '../../../App';
 import Share from 'react-native-share';
 import RNFS from 'react-native-fs';
+import SongThumbnail from '../SongThumbnail';
 
 const All_songs = (props) => {
   const { fetechAllSongs, fetchMoreSongs } = useContext(AppContext);
@@ -403,9 +404,7 @@ const All_songs = (props) => {
             style={{ flexDirection: 'row', gap: 12, alignItems: 'center', flex: 1 }}
             onPress={() => handleSongItem(item)} onLongPress={() => openBottomSheet(item)}
           >
-            <View style={[styles.musicIconContainer, { backgroundColor: isSelected ? palette.accent : palette.accentSoft }]}>
-              <FontAwesomeIcon icon={faMusic} size={18} color={'white'} />
-            </View>
+            <SongThumbnail song={item} size={42} radius={14} textSize={16} />
             <View style={{ flex: 1, alignContent: 'center', justifyContent: 'center', minWidth: 0 }}>
               <Text style={[styles.songName, { color: isSelected ? '#E82255' : themeColor }]} numberOfLines={1} ellipsizeMode="tail">
                 {item.title}
@@ -754,15 +753,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 20,
   },
-
-  musicIconContainer: {
-    width: 42,
-    height: 42,
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-
   songName: {
     fontSize: 14,
     fontWeight: 'bold',

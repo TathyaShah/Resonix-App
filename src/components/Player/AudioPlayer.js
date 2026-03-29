@@ -22,7 +22,6 @@ import {
     faForwardStep,
     faBackwardStep,
     faPlay,
-    faMusic,
     faAngleDown,
     faPause,
 } from '@fortawesome/free-solid-svg-icons';
@@ -31,6 +30,7 @@ import Slider from '@react-native-community/slider';
 import { faHeart as solidHeart } from '@fortawesome/free-solid-svg-icons';
 import { faHeart as regularHeart } from '@fortawesome/free-regular-svg-icons';
 import { useNavigation } from '@react-navigation/native';
+import SongThumbnail from '../SongThumbnail';
 
 const AudioPlayer = () => {
     // hooks
@@ -291,8 +291,8 @@ const AudioPlayer = () => {
                         <Text style={[, { color: dimColorTheme, fontSize: 14 }]}>{selected.artist}</Text>
                     </View>
 
-                    <Animated.View style={[styles.musicIconContainer, { backgroundColor: palette.accent, shadowColor: palette.shadow, transform: [{ rotate: spin }] }]}>
-                        <FontAwesomeIcon icon={faMusic} size={100} color='white' />
+                    <Animated.View style={[styles.musicIconContainer, { shadowColor: palette.shadow, transform: [{ rotate: spin }] }]}>
+                        <SongThumbnail song={selected} size={250} radius={125} textSize={92} />
                     </Animated.View>
                     <View style={[styles.infoCard, { backgroundColor: palette.surface, borderColor: palette.border }]}>
                         <Text style={{ color: themeColor, textAlign: 'center' }} numberOfLines={2}>
@@ -377,7 +377,6 @@ const styles = StyleSheet.create({
     musicIconContainer: {
         width: 250,
         height: 250,
-        backgroundColor: '#E82255',
         borderRadius: 250,
         alignItems: 'center',
         justifyContent: 'center',

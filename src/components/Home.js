@@ -4,7 +4,6 @@ import {
   Text,
   FlatList,
   TouchableOpacity,
-  Image,
   StyleSheet,
   ScrollView,
 } from 'react-native';
@@ -16,6 +15,7 @@ import { selectedSong, setIsSongPlaying } from '../redux/action';
 import TrackPlayer from 'react-native-track-player';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import { faChevronRight, faHeadphones } from '@fortawesome/free-solid-svg-icons';
+import SongThumbnail from './SongThumbnail';
 
 // Home shows a recently played carousel
 const Home = () => {
@@ -57,12 +57,7 @@ const Home = () => {
         style={styles.card}
         onPress={playSong}
       >
-        <View style={styles.thumb}>
-          {/* use artwork if available, else placeholder */}
-          {item.artwork ? (
-            <Image source={{ uri: item.artwork }} style={styles.thumb} />
-          ) : null}
-        </View>
+        <SongThumbnail song={item} size={126} radius={18} textSize={34} />
         <Text style={[styles.title, { color: palette.text }]} numberOfLines={1}>
           {item.title}
         </Text>
@@ -238,7 +233,6 @@ const styles = StyleSheet.create({
   },
   card: { width: 126, marginRight: 12 },
   recentListContent: { paddingTop: 8 },
-  thumb: { width: 126, height: 126, backgroundColor: '#444', borderRadius: 18 },
   title: { marginTop: 8, fontSize: 13, fontWeight: '600' },
   subtitle: { fontSize: 11, marginTop: 4 },
   emptyCard: {

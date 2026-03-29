@@ -14,7 +14,7 @@ import useResonixTheme from '../../hooks/useResonixTheme';
 import { Colors } from 'react-native/Libraries/NewAppScreen';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import {
-    faMusic, faEllipsisVertical, faPlay,
+    faEllipsisVertical, faPlay,
     faHeart,
     faTimes,
     faShareAlt, faInfoCircle, faTrashCan,
@@ -26,6 +26,7 @@ import TrackPlayer from 'react-native-track-player';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Share from 'react-native-share';
 import RNFS from 'react-native-fs';
+import SongThumbnail from '../SongThumbnail';
 const ArtisBasedSongs = ({ route, navigation }) => {
     const Songs = useSelector((state) => state.allSongsReducer);
     const [selectedArtistSongs, setselectedArtistSongs] = useState([]);
@@ -299,9 +300,7 @@ const ArtisBasedSongs = ({ route, navigation }) => {
                         style={{ flexDirection: 'row', gap: 12, alignItems: 'center', flex: 1 }}
                         onPress={() => handleSongItem(item)} onLongPress={() => openBottomSheet(item)}
                     >
-                        <View style={[styles.musicIconContainer, { backgroundColor: isSelected ? palette.accent : palette.accentSoft }]}>
-                            <FontAwesomeIcon icon={faMusic} size={18} color={'white'} />
-                        </View>
+                        <SongThumbnail song={item} size={42} radius={14} textSize={16} />
                         <View style={{ flexDirection: 'column', gap: 5, alignContent: 'center', flex: 1 }}>
                             <Text style={[styles.songName, { color: isSelected ? '#E82255' : themeColor }]} numberOfLines={1} ellipsizeMode="tail">{item.title}</Text>
                             <Text style={[styles.songInfo, { color: isSelected ? '#E82255' : dimColorTheme, fontSize: 10 }]} numberOfLines={1} ellipsizeMode="tail">
@@ -560,15 +559,6 @@ const styles = StyleSheet.create({
         fontWeight: '700',
     },
     songRow: { flexDirection: 'row', gap: 5, padding: 12, alignItems: 'center', justifyContent: 'space-between', borderWidth: 1, borderRadius: 20 },
-
-
-    musicIconContainer: {
-        width: 42,
-        height: 42,
-        borderRadius: 14,
-        alignItems: 'center',
-        justifyContent: 'center'
-    },
 
     songInfo: {
 

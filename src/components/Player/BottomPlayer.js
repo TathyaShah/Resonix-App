@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import TextTicker from 'react-native-text-ticker';
 import { Colors } from 'react-native/Libraries/NewAppScreen';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import { faMusic, faPlay, faForwardStep, faPause, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faPlay, faForwardStep, faPause, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { useDispatch, useSelector } from 'react-redux'
 import { selectedSong, setIsSongPlaying } from '../../redux/action';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -19,6 +19,7 @@ import {
 import useTheme from '../../hooks/useTheme';
 import useResonixTheme from '../../hooks/useResonixTheme';
 import { useNavigation } from '@react-navigation/native';
+import SongThumbnail from '../SongThumbnail';
 
 const BottomPlayer = () => {
     const navigation = useNavigation();
@@ -234,8 +235,8 @@ const BottomPlayer = () => {
         <SafeAreaView style={{}}>
             <View style={[styles.bottomPlayer, { backgroundColor: bgTheme, borderColor: palette.border, shadowColor: palette.shadow }]}>
                 <TouchableOpacity style={{ flexDirection: 'row', gap: 10, alignItems: 'center', flex: 1, minWidth: 0 }} onPress={toggleModal}>
-                    <Animated.View style={[styles.rotateMusicIconContainer, { backgroundColor: palette.accent, transform: [{ rotate: spin }] }]}>
-                        <FontAwesomeIcon icon={faMusic} size={18} color='white' />
+                    <Animated.View style={{ transform: [{ rotate: spin }] }}>
+                        <SongThumbnail song={selected} size={35} radius={18} textSize={14} />
                     </Animated.View>
                     {selected !== null ? (
                         <View style={{ flex: 1 }}>
@@ -286,17 +287,6 @@ const styles = StyleSheet.create({
         shadowOffset: { width: 0, height: 8 },
         elevation: 10,
     },
-    rotateMusicIconContainer: {
-        width: 35,
-        height: 35,
-        borderRadius: 25,
-        padding: 8,
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center'
-    },
-
     controls: {
         borderRadius: 18,
         width: 42,

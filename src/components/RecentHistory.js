@@ -4,7 +4,6 @@ import {
   Text,
   FlatList,
   TouchableOpacity,
-  Image,
   StyleSheet,
   ToastAndroid,
 } from 'react-native';
@@ -18,6 +17,7 @@ import { faHeart as faHeartRegular } from '@fortawesome/free-regular-svg-icons';
 import { useNavigation } from '@react-navigation/native';
 import BottomPlayer from './Player/BottomPlayer';
 import useResonixTheme from '../hooks/useResonixTheme';
+import SongThumbnail from './SongThumbnail';
 
 const RecentHistory = () => {
   const [recent, setRecent] = useState([]);
@@ -117,9 +117,7 @@ const RecentHistory = () => {
         style={[styles.row, { backgroundColor: palette.surface, borderColor: palette.border }]}
       >
         <View style={styles.infoContainer}>
-          <View style={styles.thumb}>
-            {item.artwork ? <Image source={{ uri: item.artwork }} style={styles.thumb} /> : null}
-          </View>
+          <SongThumbnail song={item} size={56} radius={14} textSize={20} />
           <View style={styles.textContainer}>
             <Text style={[styles.title, { color: palette.text }]} numberOfLines={1}>
               {item.title}
@@ -180,7 +178,6 @@ const styles = StyleSheet.create({
   summary: { fontSize: 12 },
   row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 14, borderRadius: 20, borderWidth: 1 },
   infoContainer: { flexDirection: 'row', alignItems: 'center', flex: 1 },
-  thumb: { width: 56, height: 56, backgroundColor: '#444', borderRadius: 14 },
   title: { fontSize: 14, fontWeight: '700' },
   subtitle: { fontSize: 12, marginTop: 4 },
   textContainer: { flex: 1, marginLeft: 12 },

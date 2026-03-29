@@ -11,13 +11,14 @@ import {
     ToastAndroid,
 } from 'react-native';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import { faChevronRight, faMusic, faSearch, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faChevronRight, faSearch, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { useNavigation } from '@react-navigation/native';
 import { useDispatch, useSelector } from 'react-redux';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import TrackPlayer from 'react-native-track-player';
 import { selectedSong, setIsSongPlaying } from '../../redux/action';
 import useResonixTheme from '../../hooks/useResonixTheme';
+import SongThumbnail from '../SongThumbnail';
 
 const PLAYLISTS = [
     { id: 'fav', name: 'Favorites', subtitle: 'Your saved songs' },
@@ -200,9 +201,7 @@ const SearchMusic = () => {
                 onPress={() => openResult(item)}
                 style={[styles.songRow, { backgroundColor: palette.surface, borderColor: isSelected ? palette.accent : palette.border }]}
             >
-                <View style={[styles.musicIconContainer, { backgroundColor: isSelected ? palette.accent : palette.accentSoft }]}>
-                    <FontAwesomeIcon icon={faMusic} size={18} color='white' />
-                </View>
+                <SongThumbnail song={item} size={42} radius={14} textSize={16} />
                 <View style={{ flex: 1 }}>
                     <Text style={{ color: isSelected ? palette.accent : palette.text, fontSize: 15, fontWeight: '600' }} numberOfLines={1}>
                         {item.title}
@@ -378,13 +377,6 @@ const styles = StyleSheet.create({
         borderRadius: 20,
         borderWidth: 1,
         marginBottom: 10,
-    },
-    musicIconContainer: {
-        width: 42,
-        height: 42,
-        borderRadius: 14,
-        alignItems: 'center',
-        justifyContent: 'center',
     },
     collectionRow: {
         flexDirection: 'row',

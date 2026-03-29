@@ -17,6 +17,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { selectedSong, setIsSongPlaying, setFavouritesSongs } from '../../redux/action';
 import TrackPlayer from 'react-native-track-player';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import SongThumbnail from '../SongThumbnail';
 
 
 const FavSongs = ({ navigation }) => {
@@ -107,9 +108,7 @@ const FavSongs = ({ navigation }) => {
             onPress={() => handleSongItem(item)}
             onLongPress={() => openBottomSheetOption(item)}
           >
-            <View style={[styles.musicIconContainer, { backgroundColor: isSelected ? palette.accent : palette.accentSoft }]}>
-              <FontAwesomeIcon icon={faMusic} size={18} color={'white'} />
-            </View>
+            <SongThumbnail song={item} size={42} radius={14} textSize={16} />
             <View style={{ flexDirection: 'column', gap: 5, alignContent: 'center', flex: 1 }}>
               <Text style={[styles.songName, { color: isSelected ? '#E82255' : themeColor }]} numberOfLines={1} ellipsizeMode="tail">{item.title}</Text>
               <View style={[styles.songInfo, { flexDirection: 'row', gap: 4, alignItems: 'center' }]}>
@@ -244,14 +243,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     borderWidth: 1,
     borderRadius: 20,
-  },
-  musicIconContainer: {
-    width: 42,
-    height: 42,
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center'
-
   },
   emptyCard: {
     margin: 16,
