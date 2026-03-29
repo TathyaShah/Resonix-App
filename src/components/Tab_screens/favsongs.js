@@ -18,6 +18,8 @@ import { selectedSong, setIsSongPlaying, setFavouritesSongs } from '../../redux/
 import TrackPlayer from 'react-native-track-player';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import SongThumbnail from '../SongThumbnail';
+import MoodAssignmentModal from '../MoodAssignmentModal';
+import { getAssignedMoodsForSong, getSongMoodAssignments, setSongMoods } from '../../utils/moods';
 
 
 const FavSongs = ({ navigation }) => {
@@ -32,6 +34,8 @@ const FavSongs = ({ navigation }) => {
   const bgTheme = isDarkMode ? Colors.black : Colors.white;
   const dimColorTheme = isDarkMode ? Colors.light : Colors.darker;
   const [openRemovefromFav, setopenRemovefromFav] = useState(false);
+  const [moodModalVisible, setMoodModalVisible] = useState(false);
+  const [selectedMoods, setSelectedMoods] = useState([]);
 
   useEffect(() => {
 
@@ -67,6 +71,30 @@ const FavSongs = ({ navigation }) => {
     setrmSongItem(songItem);
     setopenRemovefromFav(true);
   }
+
+  const openMoodAssignment = async (songItem) => {
+    try {
+      const assignments = await getSongMoodAssignments();
+      setSelectedMoods(getAssignedMoodsForSong(assignments, songItem));
+      setrmSongItem(songItem);
+      setopenRemovefromFav(false);
+      setMoodModalVisible(true);
+    } catch (error) {
+      console.error('Failed to open mood assignment', error);
+    }
+  };
+
+  const saveMoodAssignment = async moodKeys => {
+    try {
+      await setSongMoods(rmSongItem, moodKeys);
+      setSelectedMoods(moodKeys);
+      setMoodModalVisible(false);
+      ToastAndroid.show('Mood assignment updated.', ToastAndroid.SHORT);
+    } catch (error) {
+      console.error('Failed to save mood assignment', error);
+      ToastAndroid.show('Unable to update moods.', ToastAndroid.SHORT);
+    }
+  };
   const addMoreSongs = () => {
     navigation.navigate('AddToFavourites');
   }
@@ -197,6 +225,10 @@ const FavSongs = ({ navigation }) => {
               <View>
                 <View style={{ backgroundColor: '#999', width: 40, borderRadius: 5, height: 5, alignSelf: 'center', marginBottom: 20 }}></View>
                 <View style={{ flexDirection: 'column', gap: 15 }} >
+                  <TouchableOpacity style={{ flexDirection: 'row', gap: 15, justifyContent: 'center', alignItems: 'center', padding: 15 }} onPress={() => openMoodAssignment(rmSongItem)}>
+                    <Text style={{ color: palette.text, fontSize: 16 }}>Assign to mood</Text>
+                  </TouchableOpacity>
+
                   <TouchableOpacity style={{ flexDirection: 'row', gap: 15, justifyContent: 'center', alignItems: 'center', padding: 15 }} onPress={removeFromfav}>
                     <Text style={{ color: '#E82255', fontSize: 16, }}>Remove from favourite</Text>
                   </TouchableOpacity>
@@ -210,6 +242,14 @@ const FavSongs = ({ navigation }) => {
           </TouchableWithoutFeedback>
         </Pressable>
       </Modal>
+
+      <MoodAssignmentModal
+        visible={moodModalVisible}
+        title={`Assign "${rmSongItem?.title || 'song'}"`}
+        selectedMoods={selectedMoods}
+        onClose={() => setMoodModalVisible(false)}
+        onSave={saveMoodAssignment}
+      />
     </View >
 
   )

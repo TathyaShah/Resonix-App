@@ -30,9 +30,11 @@ import { AppContext } from '../../../App';
 import Share from 'react-native-share';
 import RNFS from 'react-native-fs';
 import SongThumbnail from '../SongThumbnail';
+import MoodAssignmentModal from '../MoodAssignmentModal';
+import { getAssignedMoodsForSong, getSongMoodAssignments, setSongMoods } from '../../utils/moods';
 
 const All_songs = (props) => {
-  const { fetechAllSongs, fetchMoreSongs } = useContext(AppContext);
+  const { fetchMoreSongs } = useContext(AppContext);
   const dispatch = useDispatch()
   const Songs = useSelector((state) => state.allSongsReducer);
   const selectedItem = useSelector((state) => state.selectedSongReducer);
@@ -40,16 +42,16 @@ const All_songs = (props) => {
 
   const { isDarkMode } = useTheme();
   const palette = useResonixTheme();
-  const [songsCount, setSongsCount] = useState(0);
   const [songItem, setSongItem] = useState();
   const themeColor = isDarkMode ? Colors.white : Colors.black;
-  const bgTheme = isDarkMode ? Colors.black : Colors.white;
   const dimColorTheme = isDarkMode ? Colors.light : Colors.darker;
   const [modalVisible, setModalVisible] = useState(false);
   const [optionModalVisible, setOptionModalVisible] = useState(false);
   const [songsize, setSongSize] = useState(0);
   const [songDate, setSongDate] = useState(0);
   const [openDeleteSongmodal, setOpenDeleteSongmodal] = useState(false);
+  const [moodModalVisible, setMoodModalVisible] = useState(false);
+  const [selectedMoods, setSelectedMoods] = useState([]);
 
 
 
@@ -99,8 +101,6 @@ const All_songs = (props) => {
       }
     };
     setDefaultPlayingSong();
-    let count = Songs.length;
-    setSongsCount(count);
   }, [Songs]);
 
   const isFetchingMoreRef = useRef(false);
@@ -192,16 +192,33 @@ const All_songs = (props) => {
     }
   };
 
-  const reFreshSongs = async () => {
-    await TrackPlayer.pause();
-    dispatch(setIsSongPlaying(false));
-    ToastAndroid.show('Refreshing...', 1);
-    await fetechAllSongs();
-
-  }
   const openBottomSheet = (item) => {
     setOptionModalVisible(true)
     setSongItem(item);
+  };
+
+  const openMoodAssignment = async (item) => {
+    try {
+      const assignments = await getSongMoodAssignments();
+      setSelectedMoods(getAssignedMoodsForSong(assignments, item));
+      setSongItem(item);
+      setOptionModalVisible(false);
+      setMoodModalVisible(true);
+    } catch (error) {
+      console.error('Failed to open mood assignment', error);
+    }
+  };
+
+  const saveMoodAssignment = async moodKeys => {
+    try {
+      await setSongMoods(songItem, moodKeys);
+      setSelectedMoods(moodKeys);
+      setMoodModalVisible(false);
+      ToastAndroid.show('Mood assignment updated.', ToastAndroid.SHORT);
+    } catch (error) {
+      console.error('Failed to save mood assignment', error);
+      ToastAndroid.show('Unable to update moods.', ToastAndroid.SHORT);
+    }
   };
 
 
@@ -398,7 +415,7 @@ const All_songs = (props) => {
   const renderItem = ({ item }) => {
     const isSelected = selectedItem && selectedItem.url === item.url;
     return (
-      <View style={{ marginBottom: 10 }}>
+      <View style={styles.songItemWrap}>
         <View style={[styles.songRow, { backgroundColor: palette.surface, borderColor: isSelected ? palette.accent : palette.border }]}>
           <TouchableOpacity
             style={{ flexDirection: 'row', gap: 12, alignItems: 'center', flex: 1 }}
@@ -445,28 +462,7 @@ const All_songs = (props) => {
     <SafeAreaView>
       <View style={{ backgroundColor: palette.background, width: '100%', height: '100%' }}>
 
-        <View style={[styles.frequentlyUsedContainer, { backgroundColor: palette.surface, borderColor: palette.border }]}>
-          <View style={styles.headerTop}>
-            <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
-              <View style={{
-                backgroundColor: palette.accentSoft,
-                width: 38,
-                height: 38,
-                borderRadius: 14,
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}>
-                <FontAwesomeIcon icon={faMusic} size={15} style={{ color: palette.accent, alignSelf: 'center' }} />
-              </View>
-              <View>
-                <Text style={{ fontWeight: '700', color: palette.text, fontSize: 20 }}>Library</Text>
-                <Text style={{ color: palette.subtext, fontSize: 12 }}>{songsCount} songs ready to play</Text>
-              </View>
-            </View>
-            <TouchableOpacity onPress={reFreshSongs} style={[styles.headerPill, { backgroundColor: palette.surfaceMuted }]}>
-              <Text style={{ color: palette.success, fontSize: 12, fontWeight: '700' }}>Refresh</Text>
-            </TouchableOpacity>
-          </View>
+        <View style={styles.actionWrap}>
           <View style={styles.actionRow}>
             <TouchableOpacity style={[styles.playAllButton, { backgroundColor: palette.accent }]} onPress={playAllSongs}>
               <FontAwesomeIcon icon={faPlay} size={12} style={{ color: 'white' }} />
@@ -486,7 +482,7 @@ const All_songs = (props) => {
             showsVerticalScrollIndicator={false}
             onEndReached={handleEndReached}
             onEndReachedThreshold={0.5}
-            contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 140 }}
+            contentContainerStyle={styles.listContent}
           />
         </View>
       </View>
@@ -585,6 +581,11 @@ const All_songs = (props) => {
                     <Text style={{ color: dimColorTheme, fontSize: 14 }}>Add to favourites</Text>
                   </TouchableOpacity>
 
+                  <TouchableOpacity style={{ flexDirection: 'row', gap: 15, alignItems: 'center', padding: 10 }} onPress={() => openMoodAssignment(songItem)}>
+                    <FontAwesomeIcon icon={faMusic} size={16} style={{ color: dimColorTheme }} />
+                    <Text style={{ color: dimColorTheme, fontSize: 14 }}>Assign to mood</Text>
+                  </TouchableOpacity>
+
                   <TouchableOpacity style={{ flexDirection: 'row', gap: 15, alignItems: 'center', padding: 10 }} onPress={() => shareSong(songItem)}>
                     <FontAwesomeIcon icon={faShareAlt} size={16} style={{ color: dimColorTheme }} />
                     <Text style={{ color: dimColorTheme, fontSize: 14 }}>Share song file</Text>
@@ -610,6 +611,14 @@ const All_songs = (props) => {
           </TouchableWithoutFeedback>
         </Pressable>
       </Modal>
+
+      <MoodAssignmentModal
+        visible={moodModalVisible}
+        title={`Assign "${songItem?.title || 'song'}"`}
+        selectedMoods={selectedMoods}
+        onClose={() => setMoodModalVisible(false)}
+        onSave={saveMoodAssignment}
+      />
 
       <Modal
         animationType="slide"
@@ -701,29 +710,14 @@ const styles = StyleSheet.create({
     flex:1
   },
 
-  frequentlyUsedContainer: {
-    paddingTop: 18,
-    paddingHorizontal: 18,
-    paddingBottom: 16,
+  actionWrap: {
     marginHorizontal: 16,
-    marginBottom: 8,
-    borderWidth: 1,
-    borderRadius: 24,
+    marginTop: 4,
+    marginBottom: 14,
   },
   musicContainer: {
     flex: 1,
-    marginBottom: 55,
-  },
-  headerTop: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  headerPill: {
-    borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    marginBottom: 0,
   },
   playAllButton: {
     minHeight: 48,
@@ -738,6 +732,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 10,
   },
+  listContent: {
+    paddingHorizontal: 16,
+    paddingTop: 4,
+    paddingBottom: 140,
+  },
+  songItemWrap: {
+    marginBottom: 10,
+  },
   playAllText: {
     color: '#fff',
     fontSize: 14,
@@ -745,8 +747,9 @@ const styles = StyleSheet.create({
   },
   songRow: {
     flexDirection: 'row',
-    gap: 5,
-    padding: 12,
+    gap: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 13,
     alignItems: 'center',
     justifyContent: 'space-between',
     minHeight: 68,
@@ -759,7 +762,7 @@ const styles = StyleSheet.create({
   },
   songInfoText: {
     fontSize: 12,
-    marginTop: 2,
+    marginTop: 4,
   },
   songInfo: {
 

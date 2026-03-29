@@ -23,6 +23,9 @@ import ArtisBasedSongs from './src/components/Audio_screens/artistBasedSongs';
 import AlbumSongs from './src/components/Audio_screens/albumSong';
 import PlaylistDetail from './src/components/Tab_screens/PlaylistDetail';
 import RecentHistory from './src/components/RecentHistory';
+import MoodSongs from './src/components/MoodSongs';
+import { PLAYLIST_MOOD_STORAGE_KEY, SONG_MOOD_STORAGE_KEY } from './src/utils/moods';
+import BottomPlayer from './src/components/Player/BottomPlayer';
 
 const Stack = createStackNavigator();
 export const AppContext = createContext();
@@ -86,9 +89,19 @@ const App = () => {
 
     const initializeFavSongs = async () => {
       try {
-        const existingSongs = await AsyncStorage.getItem('favSongs');
+        const [existingSongs, existingSongMoods, existingPlaylistMoods] = await Promise.all([
+          AsyncStorage.getItem('favSongs'),
+          AsyncStorage.getItem(SONG_MOOD_STORAGE_KEY),
+          AsyncStorage.getItem(PLAYLIST_MOOD_STORAGE_KEY),
+        ]);
         if (!existingSongs) {
           await AsyncStorage.setItem('favSongs', JSON.stringify([]));
+        }
+        if (!existingSongMoods) {
+          await AsyncStorage.setItem(SONG_MOOD_STORAGE_KEY, JSON.stringify({}));
+        }
+        if (!existingPlaylistMoods) {
+          await AsyncStorage.setItem(PLAYLIST_MOOD_STORAGE_KEY, JSON.stringify({}));
         }
       } catch (e) {
         console.error('Failed to initialize favSongs:', e);
@@ -172,81 +185,92 @@ const App = () => {
         />
 
         <NavigationContainer theme={theme}>
-          <Stack.Navigator>
-            <Stack.Screen
-              name="Tabs"
-              component={TabNavigator}
-              options={{
-                headerShown: false,
+          <View style={{ flex: 1 }}>
+            <Stack.Navigator>
+              <Stack.Screen
+                name="Tabs"
+                component={TabNavigator}
+                options={{
+                  headerShown: false,
 
-              }}
+                }}
 
-            />
-            <Stack.Screen
-              name="Favourites"
-              component={FavouritesSongs}
-              options={{
-                headerShown: false,
-                ...TransitionPresets.SlideFromRightIOS,
-              }}
-            />
-            <Stack.Screen
-              name="AddToFavourites"
-              component={AddToFavourites}
-              options={{
-                headerShown: false,
-                ...TransitionPresets.SlideFromRightIOS,
-              }}
-            />
-            <Stack.Screen
-              name="SearchMusic"
-              component={SearchMusic}
-              options={{
-                headerShown: false,
-                ...TransitionPresets.SlideFromRightIOS,
-              }}
-            />
-            <Stack.Screen
-              name="AudioPlayer"
-              component={AudioPlayer}
-              options={{
-                headerShown: false,
-                ...TransitionPresets.ModalSlideFromBottomIOS,
-              }}
-            />
-            <Stack.Screen
-              name="artistBasedSongs"
-              component={ArtisBasedSongs}
-              options={{
-                headerShown: false,
-                ...TransitionPresets.SlideFromRightIOS,
-              }}
-            />
-            <Stack.Screen
-              name="albumbasesongs"
-              component={AlbumSongs}
-              options={{
-                headerShown: false,
-                ...TransitionPresets.SlideFromRightIOS,
-              }}
-            />
-            <Stack.Screen
-              name="PlaylistDetail"
-              component={PlaylistDetail}
-              options={{
-                headerShown: false,
-                ...TransitionPresets.SlideFromRightIOS,
-              }}
-            />
-            <Stack.Screen
-              name="RecentHistory"
-              component={RecentHistory}
-              options={{
-                headerShown: false,
-                ...TransitionPresets.SlideFromRightIOS,
-              }}
-            />
-          </Stack.Navigator>
+              />
+              <Stack.Screen
+                name="Favourites"
+                component={FavouritesSongs}
+                options={{
+                  headerShown: false,
+                  ...TransitionPresets.SlideFromRightIOS,
+                }}
+              />
+              <Stack.Screen
+                name="AddToFavourites"
+                component={AddToFavourites}
+                options={{
+                  headerShown: false,
+                  ...TransitionPresets.SlideFromRightIOS,
+                }}
+              />
+              <Stack.Screen
+                name="SearchMusic"
+                component={SearchMusic}
+                options={{
+                  headerShown: false,
+                  ...TransitionPresets.SlideFromRightIOS,
+                }}
+              />
+              <Stack.Screen
+                name="AudioPlayer"
+                component={AudioPlayer}
+                options={{
+                  headerShown: false,
+                  ...TransitionPresets.ModalSlideFromBottomIOS,
+                }}
+              />
+              <Stack.Screen
+                name="artistBasedSongs"
+                component={ArtisBasedSongs}
+                options={{
+                  headerShown: false,
+                  ...TransitionPresets.SlideFromRightIOS,
+                }}
+              />
+              <Stack.Screen
+                name="albumbasesongs"
+                component={AlbumSongs}
+                options={{
+                  headerShown: false,
+                  ...TransitionPresets.SlideFromRightIOS,
+                }}
+              />
+              <Stack.Screen
+                name="PlaylistDetail"
+                component={PlaylistDetail}
+                options={{
+                  headerShown: false,
+                  ...TransitionPresets.SlideFromRightIOS,
+                }}
+              />
+              <Stack.Screen
+                name="RecentHistory"
+                component={RecentHistory}
+                options={{
+                  headerShown: false,
+                  ...TransitionPresets.SlideFromRightIOS,
+                }}
+              />
+              <Stack.Screen
+                name="MoodSongs"
+                component={MoodSongs}
+                options={{
+                  headerShown: false,
+                  ...TransitionPresets.SlideFromRightIOS,
+                }}
+              />
+            </Stack.Navigator>
+            <BottomPlayer />
+          </View>
         </NavigationContainer>
       </View>
     </AppContext.Provider>

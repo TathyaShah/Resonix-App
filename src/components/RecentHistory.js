@@ -15,7 +15,6 @@ import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import { faPlay, faPause, faTimes, faHeart as faHeartSolid, faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 import { faHeart as faHeartRegular } from '@fortawesome/free-regular-svg-icons';
 import { useNavigation } from '@react-navigation/native';
-import BottomPlayer from './Player/BottomPlayer';
 import useResonixTheme from '../hooks/useResonixTheme';
 import SongThumbnail from './SongThumbnail';
 
@@ -162,9 +161,6 @@ const RecentHistory = () => {
         ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
         contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 140 }}
       />
-      <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0 }}>
-        <BottomPlayer />
-      </View>
     </View>
   );
 };

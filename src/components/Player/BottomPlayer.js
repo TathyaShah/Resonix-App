@@ -18,8 +18,27 @@ import {
 } from 'react-native';
 import useTheme from '../../hooks/useTheme';
 import useResonixTheme from '../../hooks/useResonixTheme';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useNavigationState } from '@react-navigation/native';
 import SongThumbnail from '../SongThumbnail';
+
+const getActiveRouteName = state => {
+    if (!state || !Array.isArray(state.routes) || state.routes.length === 0) {
+        return undefined;
+    }
+
+    const index = typeof state.index === 'number' ? state.index : 0;
+    const route = state.routes[index];
+
+    if (!route) {
+        return undefined;
+    }
+
+    if (route.state) {
+        return getActiveRouteName(route.state);
+    }
+
+    return route.name;
+};
 
 const BottomPlayer = () => {
     const navigation = useNavigation();
@@ -27,6 +46,7 @@ const BottomPlayer = () => {
     const Songs = useSelector((state) => state.allSongsReducer);
     const selected = useSelector((state) => state.selectedSongReducer);
     const isSongPlaying = useSelector((state) => state.isSongPlaying);
+    const currentRouteName = useNavigationState(state => getActiveRouteName(state));
     //theme 
     const { isDarkMode } = useTheme();
     const palette = useResonixTheme();
@@ -227,7 +247,7 @@ const BottomPlayer = () => {
         outputRange: ['0deg', '360deg'],
     });
 
-    if (isHidden || !selected) {
+    if (isHidden || !selected || currentRouteName === 'AudioPlayer') {
         return null;
     }
 
@@ -268,16 +288,16 @@ const BottomPlayer = () => {
 
 const styles = StyleSheet.create({
     bottomPlayer: {
-        paddingLeft: 13,
+        paddingLeft: 14,
         paddingRight: 14,
         paddingVertical: 12,
         width: '92%',
         minHeight: 74,
         position: 'absolute',
-        bottom: 72,
+        bottom: 82,
         alignSelf: 'center',
         flexDirection: 'row',
-        gap: 10,
+        gap: 12,
         justifyContent: 'space-between',
         alignItems: 'center',
         borderTopWidth: 1,

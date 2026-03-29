@@ -34,6 +34,7 @@ const getFallbackColors = seed => {
 const getInitials = song => {
   const source = song?.title || song?.artist || song?.album || 'R';
   return source
+    .replace(/[^A-Za-z\s]+/g, ' ')
     .split(' ')
     .filter(Boolean)
     .slice(0, 2)

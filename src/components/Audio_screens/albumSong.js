@@ -27,6 +27,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import Share from 'react-native-share';
 import RNFS from 'react-native-fs';
 import SongThumbnail from '../SongThumbnail';
+import MoodAssignmentModal from '../MoodAssignmentModal';
+import { getAssignedMoodsForSong, getSongMoodAssignments, setSongMoods } from '../../utils/moods';
 const AlbumSongs = ({ route, navigation }) => {
     const Songs = useSelector((state) => state.allSongsReducer);
     const [selectedArtistSongs, setselectedArtistSongs] = useState([]);
@@ -45,6 +47,8 @@ const AlbumSongs = ({ route, navigation }) => {
     const [songsize, setSongSize] = useState(0);
     const [songDate, setSongDate] = useState(0);
     const [openDeleteSongmodal, setOpenDeleteSongmodal] = useState(false);
+    const [moodModalVisible, setMoodModalVisible] = useState(false);
+    const [selectedMoods, setSelectedMoods] = useState([]);
 
     useEffect(() => {
         if (albumName) {
@@ -93,6 +97,30 @@ const AlbumSongs = ({ route, navigation }) => {
     const openBottomSheet = (item) => {
         setOptionModalVisible(true)
         setSongItem(item);
+    };
+
+    const openMoodAssignment = async item => {
+        try {
+            const assignments = await getSongMoodAssignments();
+            setSelectedMoods(getAssignedMoodsForSong(assignments, item));
+            setSongItem(item);
+            setOptionModalVisible(false);
+            setMoodModalVisible(true);
+        } catch (error) {
+            console.error('Failed to open mood assignment', error);
+        }
+    };
+
+    const saveMoodAssignment = async moodKeys => {
+        try {
+            await setSongMoods(songItem, moodKeys);
+            setSelectedMoods(moodKeys);
+            setMoodModalVisible(false);
+            ToastAndroid.show('Mood assignment updated.', ToastAndroid.SHORT);
+        } catch (error) {
+            console.error('Failed to save mood assignment', error);
+            ToastAndroid.show('Unable to update moods.', ToastAndroid.SHORT);
+        }
     };
 
 
@@ -432,6 +460,11 @@ const AlbumSongs = ({ route, navigation }) => {
                                         <Text style={{ color: dimColorTheme, fontSize: 14 }}>Add to favourites</Text>
                                     </TouchableOpacity>
 
+                                    <TouchableOpacity style={{ flexDirection: 'row', gap: 15, alignItems: 'center', padding: 10 }} onPress={() => openMoodAssignment(songItem)}>
+                                        <FontAwesomeIcon icon={faPlay} size={16} style={{ color: dimColorTheme }} />
+                                        <Text style={{ color: dimColorTheme, fontSize: 14 }}>Assign to mood</Text>
+                                    </TouchableOpacity>
+
                                     <TouchableOpacity style={{ flexDirection: 'row', gap: 15, alignItems: 'center', padding: 10 }} onPress={() => shareSong(songItem)}>
                                         <FontAwesomeIcon icon={faShareAlt} size={16} style={{ color: dimColorTheme }} />
                                         <Text style={{ color: dimColorTheme, fontSize: 14 }}>Share song file</Text>
@@ -533,6 +566,13 @@ const AlbumSongs = ({ route, navigation }) => {
                     </TouchableWithoutFeedback>
                 </Pressable>
             </Modal>
+            <MoodAssignmentModal
+                visible={moodModalVisible}
+                title={`Assign "${songItem?.title || 'song'}"`}
+                selectedMoods={selectedMoods}
+                onClose={() => setMoodModalVisible(false)}
+                onSave={saveMoodAssignment}
+            />
         </View>
 
     )

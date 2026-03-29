@@ -4,7 +4,6 @@ import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useNavigation } from '@react-navigation/native';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import BottomPlayer from './Player/BottomPlayer';
 import MusicTabs from './MusicTabs';
 import Home from './Home';
 import Account from './Account';
@@ -83,7 +82,6 @@ const TabNavigator = () => {
                 <Tab.Screen name="Music" component={MusicTabs} />
                 <Tab.Screen name="Account" component={Account} />
             </Tab.Navigator>
-            <BottomPlayer />
         </View>
     );
 }

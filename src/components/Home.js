@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -10,33 +10,67 @@ import {
 import useResonixTheme from '../hooks/useResonixTheme';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { selectedSong, setIsSongPlaying } from '../redux/action';
 import TrackPlayer from 'react-native-track-player';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import { faChevronRight, faHeadphones } from '@fortawesome/free-solid-svg-icons';
 import SongThumbnail from './SongThumbnail';
+import { filterSongsByMood, getSongMoodAssignments, MOOD_OPTIONS } from '../utils/moods';
 
-// Home shows a recently played carousel
 const Home = () => {
   const [recent, setRecent] = useState([]);
+  const [moodAssignments, setMoodAssignments] = useState({});
   const navigation = useNavigation();
   const dispatch = useDispatch();
   const palette = useResonixTheme();
+  const allSongs = useSelector(state => state.allSongsReducer);
+
+  const openMoodScreen = moodKey => {
+    const parentNavigation = navigation.getParent?.();
+
+    if (parentNavigation) {
+      parentNavigation.navigate('MoodSongs', {
+        moodKey,
+        autoPlay: true,
+      });
+      return;
+    }
+
+    navigation.navigate('MoodSongs', {
+      moodKey,
+      autoPlay: true,
+    });
+  };
 
   useEffect(() => {
     const load = async () => {
       try {
-        const stored = await AsyncStorage.getItem('recentSongs');
-        if (stored) setRecent(JSON.parse(stored));
-      } catch (e) {
-        console.error('load recent failed', e);
+        const [storedRecent, storedMoodAssignments] = await Promise.all([
+          AsyncStorage.getItem('recentSongs'),
+          getSongMoodAssignments(),
+        ]);
+
+        setRecent(storedRecent ? JSON.parse(storedRecent) : []);
+        setMoodAssignments(storedMoodAssignments);
+      } catch (error) {
+        console.error('load home failed', error);
       }
     };
+
     const sub = navigation.addListener('focus', load);
     load();
     return sub;
   }, [navigation]);
+
+  const moods = useMemo(
+    () =>
+      MOOD_OPTIONS.map(mood => ({
+        ...mood,
+        count: filterSongsByMood(allSongs, moodAssignments, mood.key).length,
+      })),
+    [allSongs, moodAssignments],
+  );
 
   const renderItem = ({ item }) => {
     const playSong = async () => {
@@ -45,18 +79,14 @@ const Home = () => {
       try {
         await TrackPlayer.skip(item.id ? item.id : 0);
         await TrackPlayer.play();
-      } catch (e) {
-        // if skip fails, just play
+      } catch (error) {
         await TrackPlayer.play();
       }
       navigation.navigate('AudioPlayer');
     };
 
     return (
-      <TouchableOpacity
-        style={styles.card}
-        onPress={playSong}
-      >
+      <TouchableOpacity style={styles.card} onPress={playSong}>
         <SongThumbnail song={item} size={126} radius={18} textSize={34} />
         <Text style={[styles.title, { color: palette.text }]} numberOfLines={1}>
           {item.title}
@@ -68,20 +98,18 @@ const Home = () => {
     );
   };
 
-  const moods = [
-    { key: 'happy', label: 'Happy', emoji: '😄' },
-    { key: 'sad', label: 'Sad', emoji: '😢' },
-    { key: 'energetic', label: 'Energetic', emoji: '⚡' },
-    { key: 'love', label: 'Love', emoji: '❤️' },
-  ];
-
   return (
     <ScrollView
       style={{ flex: 1, backgroundColor: palette.background }}
       contentContainerStyle={styles.container}
       showsVerticalScrollIndicator={false}
     >
-      <View style={[styles.sectionCard, { backgroundColor: palette.surface, borderColor: palette.border }]}>
+      <View
+        style={[
+          styles.sectionCard,
+          { backgroundColor: palette.surface, borderColor: palette.border },
+        ]}
+      >
         <View style={styles.sectionHeaderRow}>
           <Text style={[styles.sectionTitle, { color: palette.text }]}>What&apos;s your mood?</Text>
           <View style={[styles.badge, { backgroundColor: palette.surfaceMuted }]}>
@@ -101,15 +129,25 @@ const Home = () => {
                 },
               ]}
               activeOpacity={0.85}
+              onPress={() => openMoodScreen(mood.key)}
             >
-              <Text style={styles.moodEmoji}>{mood.emoji}</Text>
-              <Text style={[styles.moodLabel, { color: palette.text }]}>{mood.label}</Text>
+              <View>
+                <Text style={[styles.moodLabel, { color: palette.text }]}>{mood.label}</Text>
+                <Text style={[styles.moodCount, { color: palette.subtext }]}>
+                  {mood.count ? `${mood.count} songs` : 'No songs yet'}
+                </Text>
+              </View>
             </TouchableOpacity>
           ))}
         </View>
       </View>
 
-      <View style={[styles.sectionCard, { backgroundColor: palette.surface, borderColor: palette.border }]}>
+      <View
+        style={[
+          styles.sectionCard,
+          { backgroundColor: palette.surface, borderColor: palette.border },
+        ]}
+      >
         <View style={styles.header}>
           <View style={styles.sectionHeaderRow}>
             <View style={styles.recentTitleWrap}>
@@ -118,7 +156,10 @@ const Home = () => {
                 <Text style={styles.counterText}>{recent.length}</Text>
               </View>
             </View>
-            <TouchableOpacity onPress={() => navigation.navigate('RecentHistory')} style={styles.recentArrow}>
+            <TouchableOpacity
+              onPress={() => navigation.navigate('RecentHistory')}
+              style={styles.recentArrow}
+            >
               <FontAwesomeIcon icon={faChevronRight} size={16} color={palette.accent} />
             </TouchableOpacity>
           </View>
@@ -131,7 +172,12 @@ const Home = () => {
           renderItem={renderItem}
           contentContainerStyle={styles.recentListContent}
           ListEmptyComponent={
-            <View style={[styles.emptyCard, { backgroundColor: palette.surfaceMuted, borderColor: palette.border }]}>
+            <View
+              style={[
+                styles.emptyCard,
+                { backgroundColor: palette.surfaceMuted, borderColor: palette.border },
+              ]}
+            >
               <Text style={[styles.emptyTitle, { color: palette.text }]}>No recent tracks yet</Text>
               <Text style={[styles.emptySubtitle, { color: palette.subtext }]}>
                 Start playing music and your history will appear here.
@@ -148,12 +194,12 @@ const styles = StyleSheet.create({
   container: {
     padding: 16,
     paddingBottom: 140,
-    gap: 16,
+    gap: 18,
   },
   sectionCard: {
     borderWidth: 1,
     borderRadius: 24,
-    padding: 18,
+    padding: 20,
   },
   header: {
     justifyContent: 'space-between',
@@ -209,8 +255,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
-    marginTop: 14,
-    rowGap: 10,
+    marginTop: 16,
+    rowGap: 12,
   },
   moodCard: {
     width: '48%',
@@ -218,23 +264,26 @@ const styles = StyleSheet.create({
     maxHeight: 110,
     borderRadius: 18,
     borderWidth: 1,
-    padding: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'flex-start',
+    paddingHorizontal: 14,
+    paddingVertical: 13,
+    justifyContent: 'center',
   },
   moodEmoji: {
     fontSize: 24,
-    marginRight: 8,
+    marginBottom: 8,
   },
   moodLabel: {
     fontSize: 16,
     fontWeight: '600',
   },
-  card: { width: 126, marginRight: 12 },
-  recentListContent: { paddingTop: 8 },
-  title: { marginTop: 8, fontSize: 13, fontWeight: '600' },
-  subtitle: { fontSize: 11, marginTop: 4 },
+  moodCount: {
+    fontSize: 11,
+    marginTop: 4,
+  },
+  card: { width: 126, marginRight: 14 },
+  recentListContent: { paddingTop: 10, paddingBottom: 2 },
+  title: { marginTop: 10, fontSize: 13, fontWeight: '600' },
+  subtitle: { fontSize: 11, marginTop: 5 },
   emptyCard: {
     width: 280,
     borderWidth: 1,
