@@ -18,6 +18,13 @@ import { faChevronRight, faHeadphones } from '@fortawesome/free-solid-svg-icons'
 import SongThumbnail from './SongThumbnail';
 import { filterSongsByMood, getSongMoodAssignments, MOOD_OPTIONS } from '../utils/moods';
 
+const MOOD_BORDER_COLORS = {
+  happy: '#F2B84B',
+  sad: '#6E94D6',
+  energetic: '#F08A4B',
+  love: '#D96A86',
+};
+
 const Home = () => {
   const [recent, setRecent] = useState([]);
   const [moodAssignments, setMoodAssignments] = useState({});
@@ -87,7 +94,7 @@ const Home = () => {
 
     return (
       <TouchableOpacity style={styles.card} onPress={playSong}>
-        <SongThumbnail song={item} size={126} radius={18} textSize={34} />
+        <SongThumbnail song={item} size={84} radius={14} textSize={24} />
         <Text style={[styles.title, { color: palette.text }]} numberOfLines={1}>
           {item.title}
         </Text>
@@ -125,7 +132,7 @@ const Home = () => {
                 styles.moodCard,
                 {
                   backgroundColor: index % 2 === 0 ? palette.surfaceMuted : palette.surfaceStrong,
-                  borderColor: palette.border,
+                  borderColor: MOOD_BORDER_COLORS[mood.key] || palette.border,
                 },
               ]}
               activeOpacity={0.85}
@@ -263,7 +270,7 @@ const styles = StyleSheet.create({
     aspectRatio: 5 / 3,
     maxHeight: 110,
     borderRadius: 18,
-    borderWidth: 1,
+    borderWidth: 1.5,
     paddingHorizontal: 14,
     paddingVertical: 13,
     justifyContent: 'center',
@@ -280,10 +287,10 @@ const styles = StyleSheet.create({
     fontSize: 11,
     marginTop: 4,
   },
-  card: { width: 126, marginRight: 14 },
+  card: { width: 84, marginRight: 8 },
   recentListContent: { paddingTop: 10, paddingBottom: 2 },
-  title: { marginTop: 10, fontSize: 13, fontWeight: '600' },
-  subtitle: { fontSize: 11, marginTop: 5 },
+  title: { marginTop: 8, fontSize: 12, fontWeight: '600' },
+  subtitle: { fontSize: 10, marginTop: 4 },
   emptyCard: {
     width: 280,
     borderWidth: 1,

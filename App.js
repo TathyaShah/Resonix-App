@@ -24,6 +24,8 @@ import AlbumSongs from './src/components/Audio_screens/albumSong';
 import PlaylistDetail from './src/components/Tab_screens/PlaylistDetail';
 import RecentHistory from './src/components/RecentHistory';
 import MoodSongs from './src/components/MoodSongs';
+import ArtistsLibraryScreen from './src/components/Tab_screens/ArtistsLibraryScreen';
+import AlbumsLibraryScreen from './src/components/Tab_screens/AlbumsLibraryScreen';
 import { PLAYLIST_MOOD_STORAGE_KEY, SONG_MOOD_STORAGE_KEY } from './src/utils/moods';
 import BottomPlayer from './src/components/Player/BottomPlayer';
 
@@ -292,6 +294,22 @@ const App = () => {
               <Stack.Screen
                 name="RecentHistory"
                 component={RecentHistory}
+                options={{
+                  headerShown: false,
+                  ...TransitionPresets.SlideFromRightIOS,
+                }}
+              />
+              <Stack.Screen
+                name="ArtistsLibrary"
+                component={ArtistsLibraryScreen}
+                options={{
+                  headerShown: false,
+                  ...TransitionPresets.SlideFromRightIOS,
+                }}
+              />
+              <Stack.Screen
+                name="AlbumsLibrary"
+                component={AlbumsLibraryScreen}
                 options={{
                   headerShown: false,
                   ...TransitionPresets.SlideFromRightIOS,

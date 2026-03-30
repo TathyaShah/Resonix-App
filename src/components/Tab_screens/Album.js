@@ -3,8 +3,9 @@ import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native
 import useResonixTheme from '../../hooks/useResonixTheme';
 import { useSelector } from 'react-redux';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import { faAngleRight, faFolder } from '@fortawesome/free-solid-svg-icons';
-const Album = ({ navigation }) => {
+import { faAngleLeft, faAngleRight, faFolder } from '@fortawesome/free-solid-svg-icons';
+
+const Album = ({ navigation, showBackButton = false }) => {
     const Songs = useSelector((state) => state.allSongsReducer);
     const [albumSong, setalbumSong] = useState([]);
     const [albumCount, setalbumCount] = useState(0);
@@ -22,6 +23,14 @@ const Album = ({ navigation }) => {
     }
     return (
         <View style={[styles.container, { backgroundColor: palette.background }]}>
+            {showBackButton ? (
+                <TouchableOpacity
+                    onPress={() => navigation.goBack()}
+                    style={[styles.backButton, { backgroundColor: palette.surfaceMuted }]}
+                >
+                    <FontAwesomeIcon icon={faAngleLeft} size={16} color={palette.text} />
+                </TouchableOpacity>
+            ) : null}
             <View style={[styles.heroCard, { backgroundColor: palette.surface, borderColor: palette.border }]}>
                 <View style={[styles.iconWrap, { backgroundColor: palette.accentSoft }]}>
                     <FontAwesomeIcon icon={faFolder} size={16} color={palette.accent} />
@@ -53,6 +62,14 @@ const Album = ({ navigation }) => {
 
 const styles = StyleSheet.create({
     container: { flex: 1, padding: 16 },
+    backButton: {
+        width: 42,
+        height: 42,
+        borderRadius: 14,
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginBottom: 14,
+    },
     heroCard: { borderWidth: 1, borderRadius: 24, padding: 18, marginBottom: 14 },
     iconWrap: { width: 36, height: 36, borderRadius: 12, alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
     title: { fontSize: 22, fontWeight: '700', marginBottom: 4 },

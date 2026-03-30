@@ -42,7 +42,7 @@ const TabNavigator = () => {
                         <FontAwesomeIcon icon={faPlay} size={16} style={{ color: 'white' }} />
                     </View>
                     <View>
-                        <Text style={[styles.eyebrow, { color: palette.subtext }]}>Your music space</Text>
+                        {/* <Text style={[styles.eyebrow, { color: palette.subtext }]}>Your music space</Text> */}
                         <Text style={[styles.titleStyle, { color: palette.text }]}>
                             <Text style={{ color: palette.accent, fontWeight: 'bold' }}>Resonix</Text>
                         </Text>

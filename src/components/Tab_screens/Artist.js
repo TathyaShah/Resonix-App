@@ -3,8 +3,9 @@ import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native
 import useResonixTheme from '../../hooks/useResonixTheme';
 import { useSelector } from 'react-redux';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import { faAngleRight, faMicrophoneLines } from '@fortawesome/free-solid-svg-icons';
-const Artist = ({ navigation }) => {
+import { faAngleLeft, faAngleRight, faMicrophoneLines } from '@fortawesome/free-solid-svg-icons';
+
+const Artist = ({ navigation, showBackButton = false }) => {
     const Songs = useSelector((state) => state.allSongsReducer);
     const [songArtist, setsongArtist] = useState([]);
     const [artistCount, setAristCount] = useState(0);
@@ -23,6 +24,14 @@ const Artist = ({ navigation }) => {
     }
     return (
         <View style={[styles.container, { backgroundColor: palette.background }]}>
+            {showBackButton ? (
+                <TouchableOpacity
+                    onPress={() => navigation.goBack()}
+                    style={[styles.backButton, { backgroundColor: palette.surfaceMuted }]}
+                >
+                    <FontAwesomeIcon icon={faAngleLeft} size={16} color={palette.text} />
+                </TouchableOpacity>
+            ) : null}
             <View style={[styles.heroCard, { backgroundColor: palette.surface, borderColor: palette.border }]}>
                 <View style={[styles.iconWrap, { backgroundColor: palette.accentSoft }]}>
                     <FontAwesomeIcon icon={faMicrophoneLines} size={16} color={palette.accent} />
@@ -52,6 +61,14 @@ const Artist = ({ navigation }) => {
 
 const styles = StyleSheet.create({
     container: { flex: 1, padding: 16 },
+    backButton: {
+        width: 42,
+        height: 42,
+        borderRadius: 14,
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginBottom: 14,
+    },
     heroCard: { borderWidth: 1, borderRadius: 24, padding: 18, marginBottom: 14 },
     iconWrap: { width: 36, height: 36, borderRadius: 12, alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
     title: { fontSize: 22, fontWeight: '700', marginBottom: 4 },
