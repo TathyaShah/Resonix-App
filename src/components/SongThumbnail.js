@@ -47,16 +47,46 @@ export const getSongArtworkUri = song => {
   if (!artworkValue || typeof artworkValue !== 'string') {
     return null;
   }
-  if (artworkValue.startsWith('file://') || artworkValue.startsWith('content://') || artworkValue.startsWith('http')) {
-    return artworkValue;
+  const trimmedArtwork = artworkValue.trim();
+  if (!trimmedArtwork) {
+    return null;
   }
-  return `file://${artworkValue}`;
+  if (
+    trimmedArtwork.startsWith('data:image/') ||
+    trimmedArtwork.startsWith('file://') ||
+    trimmedArtwork.startsWith('content://') ||
+    trimmedArtwork.startsWith('http')
+  ) {
+    return trimmedArtwork;
+  }
+  // `react-native-get-music-files` may provide raw base64 artwork in `cover`.
+  if (/^[A-Za-z0-9+/=\r\n]+$/.test(trimmedArtwork) && !trimmedArtwork.includes('\\')) {
+    return `data:image/jpeg;base64,${trimmedArtwork.replace(/\s+/g, '')}`;
+  }
+  if (
+    trimmedArtwork.startsWith('/') ||
+    trimmedArtwork.startsWith('./') ||
+    trimmedArtwork.startsWith('../')
+  ) {
+    return `file://${trimmedArtwork}`;
+  }
+  return null;
 };
 
-const SongThumbnail = ({ song, size = 42, radius = 14, textSize = 16, style }) => {
+const SongThumbnail = ({
+  song,
+  size = 42,
+  width,
+  height,
+  radius = 14,
+  textSize = 16,
+  style,
+}) => {
   const artworkUri = getSongArtworkUri(song);
   const [imageFailed, setImageFailed] = useState(false);
   const initials = useMemo(() => getInitials(song), [song]);
+  const resolvedWidth = width ?? size;
+  const resolvedHeight = height ?? size;
   const fallbackColors = useMemo(
     () =>
       getFallbackColors(
@@ -72,8 +102,8 @@ const SongThumbnail = ({ song, size = 42, radius = 14, textSize = 16, style }) =
   const wrapperStyle = [
     styles.thumb,
     {
-      width: size,
-      height: size,
+      width: resolvedWidth,
+      height: resolvedHeight,
       borderRadius: radius,
     },
     style,

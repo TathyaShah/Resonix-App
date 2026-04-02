@@ -201,7 +201,7 @@ const SearchMusic = () => {
                 onPress={() => openResult(item)}
                 style={[styles.songRow, { backgroundColor: palette.surface, borderColor: isSelected ? palette.accent : palette.border }]}
             >
-                <SongThumbnail song={item} size={42} radius={14} textSize={16} />
+                <SongThumbnail song={item} width={56} height={42} radius={14} textSize={16} />
                 <View style={{ flex: 1 }}>
                     <Text style={{ color: isSelected ? palette.accent : palette.text, fontSize: 15, fontWeight: '600' }} numberOfLines={1}>
                         {item.title}

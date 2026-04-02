@@ -107,7 +107,7 @@ const AddToFavourites = (props) => {
                         style={{ flexDirection: 'row', gap: 12, alignItems: 'center', flex: 1 }}
 
                     >
-                        <SongThumbnail song={item} size={42} radius={14} textSize={16} />
+                        <SongThumbnail song={item} width={56} height={42} radius={14} textSize={16} />
                         <View style={{ flexDirection: 'column', gap: 5, alignContent: 'center', flex: 1 }}>
                             <Text style={[styles.songName, { color: themeColor }]} numberOfLines={1} ellipsizeMode="tail">{item.title}</Text>
                             <View style={[styles.songInfo, { flexDirection: 'row', gap: 4, alignItems: 'center' }]}>

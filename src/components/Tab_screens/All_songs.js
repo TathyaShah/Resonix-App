@@ -421,7 +421,7 @@ const All_songs = (props) => {
             style={{ flexDirection: 'row', gap: 12, alignItems: 'center', flex: 1 }}
             onPress={() => handleSongItem(item)} onLongPress={() => openBottomSheet(item)}
           >
-            <SongThumbnail song={item} size={42} radius={14} textSize={16} />
+            <SongThumbnail song={item} width={56} height={42} radius={14} textSize={16} />
             <View style={{ flex: 1, alignContent: 'center', justifyContent: 'center', minWidth: 0 }}>
               <Text style={[styles.songName, { color: isSelected ? palette.accent : themeColor }]} numberOfLines={1} ellipsizeMode="tail">
                 {item.title}

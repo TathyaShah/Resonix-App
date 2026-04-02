@@ -116,7 +116,7 @@ const RecentHistory = () => {
         style={[styles.row, { backgroundColor: palette.surface, borderColor: palette.border }]}
       >
         <View style={styles.infoContainer}>
-          <SongThumbnail song={item} size={56} radius={14} textSize={20} />
+          <SongThumbnail song={item} width={72} height={54} radius={14} textSize={20} />
           <View style={styles.textContainer}>
             <Text style={[styles.title, { color: palette.text }]} numberOfLines={1}>
               {item.title}

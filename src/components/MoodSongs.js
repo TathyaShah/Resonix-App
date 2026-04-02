@@ -167,7 +167,7 @@ const MoodSongs = ({ route, navigation }) => {
           style={styles.songRowLeft}
           activeOpacity={0.88}
         >
-          <SongThumbnail song={item} size={42} radius={14} textSize={16} />
+          <SongThumbnail song={item} width={56} height={42} radius={14} textSize={16} />
           <View style={styles.songTextWrap}>
             <Text
               style={[styles.songName, { color: isSelected ? palette.accent : palette.text }]}

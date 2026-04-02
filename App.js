@@ -7,6 +7,7 @@ import TabNavigator from './src/components/tab';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   PermissionsAndroid,
+  Platform,
   StatusBar,
   View,
   useColorScheme,
@@ -146,32 +147,34 @@ const App = () => {
   useEffect(() => {
     const requestPermissions = async () => {
       try {
-        const grantedStorage = await PermissionsAndroid.request(
-          PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
-          {
-            title: 'Storage Permission',
-            message: 'Your app needs access to storage to store audio and video files.',
-            buttonNeutral: 'Ask Me Later',
-            buttonNegative: 'Cancel',
-            buttonPositive: 'OK',
-          },
-        );
+        const readPermission =
+          Platform.OS === 'android' && Platform.Version >= 33
+            ? PermissionsAndroid.PERMISSIONS.READ_MEDIA_AUDIO
+            : PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE;
 
-        const grantedWriteStorage = await PermissionsAndroid.request(
-          PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
-          {
-            title: 'Storage Permission',
-            message: 'Your app needs access to storage to store audio and video files.',
-            buttonNeutral: 'Ask Me Later',
-            buttonNegative: 'Cancel',
-            buttonPositive: 'OK',
-          },
-        );
-        if (
-          grantedStorage === PermissionsAndroid.RESULTS.GRANTED &&
-          grantedWriteStorage === PermissionsAndroid.RESULTS.GRANTED
+        const grantedStorage = await PermissionsAndroid.request(readPermission, {
+          title: 'Audio Permission',
+          message: 'Resonix needs access to your device audio files to build your library.',
+          buttonNeutral: 'Ask Me Later',
+          buttonNegative: 'Cancel',
+          buttonPositive: 'OK',
+        });
 
-        ) {
+        let grantedWriteStorage = PermissionsAndroid.RESULTS.GRANTED;
+        if (Platform.OS === 'android' && Platform.Version < 33) {
+          grantedWriteStorage = await PermissionsAndroid.request(
+            PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
+            {
+              title: 'Storage Permission',
+              message: 'Resonix needs storage access to manage audio files on your device.',
+              buttonNeutral: 'Ask Me Later',
+              buttonNegative: 'Cancel',
+              buttonPositive: 'OK',
+            },
+          );
+        }
+
+        if (grantedStorage === PermissionsAndroid.RESULTS.GRANTED && grantedWriteStorage === PermissionsAndroid.RESULTS.GRANTED) {
           fetechAllSongs();
         } else {
           requestPermissions();
@@ -187,6 +190,7 @@ const App = () => {
     await getAll({
       // Use a large finite integer instead of Infinity to avoid native bridge errors
       limit: 200,
+      coverQuality: 80,
     })
       .then((filesOrError) => {
         if (typeof filesOrError === 'string') {

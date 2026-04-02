@@ -94,7 +94,7 @@ const Home = () => {
 
     return (
       <TouchableOpacity style={styles.card} onPress={playSong}>
-        <SongThumbnail song={item} size={84} radius={14} textSize={24} />
+        <SongThumbnail song={item} width={96} height={72} radius={14} textSize={24} />
         <Text style={[styles.title, { color: palette.text }]} numberOfLines={1}>
           {item.title}
         </Text>
@@ -287,8 +287,8 @@ const styles = StyleSheet.create({
     fontSize: 11,
     marginTop: 4,
   },
-  card: { width: 84, marginRight: 8 },
-  recentListContent: { paddingTop: 10, paddingBottom: 2 },
+  card: { width: 96, marginRight: 14 },
+  recentListContent: { paddingTop: 10, paddingBottom: 2, paddingRight: 6 },
   title: { marginTop: 8, fontSize: 12, fontWeight: '600' },
   subtitle: { fontSize: 10, marginTop: 4 },
   emptyCard: {

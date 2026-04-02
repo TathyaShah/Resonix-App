@@ -136,7 +136,7 @@ const FavSongs = ({ navigation }) => {
             onPress={() => handleSongItem(item)}
             onLongPress={() => openBottomSheetOption(item)}
           >
-            <SongThumbnail song={item} size={42} radius={14} textSize={16} />
+            <SongThumbnail song={item} width={56} height={42} radius={14} textSize={16} />
             <View style={{ flexDirection: 'column', gap: 5, alignContent: 'center', flex: 1 }}>
               <Text style={[styles.songName, { color: isSelected ? palette.accent : themeColor }]} numberOfLines={1} ellipsizeMode="tail">{item.title}</Text>
               <View style={[styles.songInfo, { flexDirection: 'row', gap: 4, alignItems: 'center' }]}>
