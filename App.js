@@ -28,6 +28,7 @@ import MoodSongs from './src/components/MoodSongs';
 import ArtistsLibraryScreen from './src/components/Tab_screens/ArtistsLibraryScreen';
 import AlbumsLibraryScreen from './src/components/Tab_screens/AlbumsLibraryScreen';
 import { PLAYLIST_MOOD_STORAGE_KEY, SONG_MOOD_STORAGE_KEY } from './src/utils/moods';
+import { ONLINE_LYRICS_STORAGE_KEY } from './src/utils/lyrics';
 import BottomPlayer from './src/components/Player/BottomPlayer';
 
 const Stack = createStackNavigator();
@@ -37,6 +38,7 @@ const App = () => {
   const [appTheme, setAppTheme] = useState('system');
   const [colorTheme, setColorTheme] = useState('red');
   const [useDefaultColorTheme, setUseDefaultColorTheme] = useState(true);
+  const [onlineLyricsEnabled, setOnlineLyricsEnabled] = useState(false);
 
   const isDarkMode = appTheme === 'system' ? systemColorScheme === 'dark' : appTheme === 'dark';
   const themeBase = isDarkMode ? DarkTheme : DefaultTheme;
@@ -67,15 +69,19 @@ const App = () => {
   useEffect(() => {
     const loadTheme = async () => {
       try {
-        const [storedTheme, storedColorTheme, storedUseDefaultColorTheme] = await Promise.all([
+        const [storedTheme, storedColorTheme, storedUseDefaultColorTheme, storedOnlineLyricsPreference] = await Promise.all([
           AsyncStorage.getItem('appTheme'),
           AsyncStorage.getItem('colorTheme'),
           AsyncStorage.getItem('useDefaultColorTheme'),
+          AsyncStorage.getItem(ONLINE_LYRICS_STORAGE_KEY),
         ]);
         if (storedTheme) setAppTheme(storedTheme);
         if (storedColorTheme) setColorTheme(storedColorTheme);
         if (storedUseDefaultColorTheme !== null) {
           setUseDefaultColorTheme(storedUseDefaultColorTheme === 'true');
+        }
+        if (storedOnlineLyricsPreference !== null) {
+          setOnlineLyricsEnabled(storedOnlineLyricsPreference === 'true');
         }
       } catch (e) {
         console.error('Failed to load theme', e);
@@ -220,6 +226,8 @@ const App = () => {
         setColorTheme,
         useDefaultColorTheme,
         setUseDefaultColorTheme,
+        onlineLyricsEnabled,
+        setOnlineLyricsEnabled,
       }}
     >
       <View style={{ flex: 1, backgroundColor: isDarkMode ? '#000' : '#fff' }}>

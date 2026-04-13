@@ -36,6 +36,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { AppContext } from '../../App';
 import { setFavouritesSongs } from '../redux/action';
 import useResonixTheme from '../hooks/useResonixTheme';
+import { ONLINE_LYRICS_STORAGE_KEY } from '../utils/lyrics';
 
 const THEME_OPTIONS = [
   { key: 'light', label: 'Light' },
@@ -60,6 +61,8 @@ const Account = () => {
     setColorTheme,
     useDefaultColorTheme,
     setUseDefaultColorTheme,
+    onlineLyricsEnabled,
+    setOnlineLyricsEnabled,
     fetechAllSongs,
   } = useContext(AppContext);
   const allSongs = useSelector(state => state.allSongsReducer);
@@ -153,6 +156,19 @@ const Account = () => {
     [],
   );
 
+  const handleOnlineLyricsToggle = useCallback(
+    async value => {
+      try {
+        setOnlineLyricsEnabled?.(value);
+        await AsyncStorage.setItem(ONLINE_LYRICS_STORAGE_KEY, String(value));
+        notify(value ? 'Online lyrics enabled.' : 'Online lyrics disabled.');
+      } catch (error) {
+        console.error('Failed to update lyrics preference', error);
+      }
+    },
+    [notify, setOnlineLyricsEnabled],
+  );
+
   const refreshLibrary = useCallback(async () => {
     try {
       setIsRefreshingLibrary(true);
@@ -230,10 +246,12 @@ const Account = () => {
                   'libraryAutoScan',
                   'colorTheme',
                   'useDefaultColorTheme',
+                  ONLINE_LYRICS_STORAGE_KEY,
                 ]);
               setName('');
               setIsEditingName(true);
               setAutoScan(true);
+              setOnlineLyricsEnabled?.(false);
                 if (setAppTheme) {
                   setAppTheme('system');
                 }
@@ -247,7 +265,7 @@ const Account = () => {
         },
       ],
     );
-  }, [notify, setAppTheme, setColorTheme, setUseDefaultColorTheme]);
+  }, [notify, setAppTheme, setColorTheme, setOnlineLyricsEnabled, setUseDefaultColorTheme]);
 
   const shareApp = useCallback(async () => {
     try {
@@ -709,6 +727,26 @@ const Account = () => {
             onValueChange={handleAutoScanToggle}
             trackColor={{ false: '#8E97A8', true: palette.accentSoft }}
             thumbColor={autoScan ? palette.accent : '#F7F8FB'}
+          />
+        </View>
+
+        <View
+          style={[
+            styles.preferenceRow,
+            { backgroundColor: palette.cardMuted, borderColor: palette.border, marginTop: 12 },
+          ]}
+        >
+          <View style={styles.preferenceTextWrap}>
+            <Text style={[styles.listRowTitle, { color: palette.text }]}>Fetch lyrics online</Text>
+            <Text style={[styles.listRowSubtitle, { color: palette.subtext }]}>
+              Show lyrics on the player screen when an internet connection is available.
+            </Text>
+          </View>
+          <Switch
+            value={onlineLyricsEnabled}
+            onValueChange={handleOnlineLyricsToggle}
+            trackColor={{ false: '#8E97A8', true: palette.accentSoft }}
+            thumbColor={onlineLyricsEnabled ? palette.accent : '#F7F8FB'}
           />
         </View>
 
