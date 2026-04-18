@@ -232,7 +232,7 @@ const SearchMusic = () => {
 
     return (
         <View style={{ flex: 1, backgroundColor: palette.background }}>
-            <View style={[styles.searchShell, { paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0 }]}>
+        <View style={[styles.searchShell, { paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0 }]}>
                 <View style={[styles.searchBar, { backgroundColor: palette.surface, borderColor: palette.border }]}>
                     <FontAwesomeIcon icon={faSearch} size={15} style={{ color: palette.subtext }} />
                     <TextInput
@@ -251,9 +251,6 @@ const SearchMusic = () => {
                         </TouchableOpacity>
                     ) : null}
                 </View>
-                <TouchableOpacity onPress={() => navigation.goBack()} style={[styles.cancelPill, { backgroundColor: palette.surfaceMuted }]}>
-                    <Text style={{ color: palette.success, fontWeight: '700' }}>Close</Text>
-                </TouchableOpacity>
             </View>
 
             <View style={styles.filterWrap}>
@@ -320,15 +317,15 @@ const styles = StyleSheet.create({
     searchShell: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 10,
+        gap: 0,
         paddingHorizontal: 16,
-        marginTop: 10,
+        marginTop: 0,
         marginBottom: 10,
     },
     searchBar: {
         flex: 1,
         borderWidth: 1,
-        borderRadius: 18,
+        borderRadius: 14,
         paddingHorizontal: 14,
         minHeight: 54,
         flexDirection: 'row',
@@ -347,13 +344,18 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         paddingHorizontal: 16,
         paddingBottom: 12,
+        justifyContent: 'space-between',
+        gap:6
     },
     filterChip: {
         paddingHorizontal: 12,
         paddingVertical: 8,
-        borderRadius: 16,
+        borderRadius: 12,
         borderWidth: 1,
-        marginRight: 8,
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginRight: 0,
     },
     historyCard: {
         marginHorizontal: 16,

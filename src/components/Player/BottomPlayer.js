@@ -255,9 +255,9 @@ const BottomPlayer = () => {
         <SafeAreaView style={{}}>
             <View style={[styles.bottomPlayer, { backgroundColor: bgTheme, borderColor: palette.border, shadowColor: palette.shadow }]}>
                 <TouchableOpacity style={{ flexDirection: 'row', gap: 10, alignItems: 'center', flex: 1, minWidth: 0 }} onPress={toggleModal}>
-                    <Animated.View style={{ transform: [{ rotate: spin }] }}>
+                    <View>
                         <SongThumbnail song={selected} size={35} radius={18} textSize={14} />
-                    </Animated.View>
+                    </View>
                     {selected !== null ? (
                         <View style={{ flex: 1 }}>
                             <TextTicker numberOfLines={1} style={[styles.songName, { color: themeColor }]} ellipsizeMode="tail" scrollSpeed={50}>

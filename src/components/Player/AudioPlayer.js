@@ -577,7 +577,7 @@ const AudioPlayer = () => {
           <Animated.View
             style={[
               styles.musicIconContainer,
-              {shadowColor: palette.shadow, transform: [{rotate: spin}]},
+              {shadowColor: palette.shadow},
             ]}>
             <SongThumbnail
               song={selected}

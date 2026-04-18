@@ -115,6 +115,7 @@ const SongThumbnail = ({
         <Image
           source={{ uri: artworkUri }}
           style={[StyleSheet.absoluteFillObject, { borderRadius: radius }]}
+          resizeMode="cover"
           onError={() => setImageFailed(true)}
         />
       </View>

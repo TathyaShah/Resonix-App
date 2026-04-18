@@ -1,6 +1,7 @@
 import React, { useCallback, useContext, useState } from 'react';
 import {
   Alert,
+  Modal,
   Platform,
   ScrollView,
   Share,
@@ -11,6 +12,7 @@ import {
   ToastAndroid,
   TouchableOpacity,
   View,
+  FlatList,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
@@ -31,6 +33,7 @@ import {
   faTrashCan,
   faUser,
   faWaveSquare,
+  faTimes,
 } from '@fortawesome/free-solid-svg-icons';
 import { useSelector, useDispatch } from 'react-redux';
 import { AppContext } from '../../App';
@@ -49,6 +52,27 @@ const COLOR_THEME_OPTIONS = [
   { key: 'green', label: 'Green', color: '#2E7D32' },
   { key: 'red', label: 'Red', color: '#E53935' },
   { key: 'blue', label: 'Blue', color: '#1565C0' },
+];
+
+const AVATARS = [
+  { id: 0, character: '🧁', label: 'Cupcake', bgColor: '#F4A460' },
+  { id: 1, character: '🐕', label: 'Dog', bgColor: '#DAA520' },
+  { id: 2, character: '🤖', label: 'Robot', bgColor: '#4DD0E1' },
+  { id: 3, character: '🍔', label: 'Burger', bgColor: '#EF5350' },
+  { id: 4, character: '🥷', label: 'Ninja', bgColor: '#C2185B' },
+  { id: 5, character: '🧢', label: 'Baseball', bgColor: '#1E88E5' },
+  { id: 6, character: '🐓', label: 'Rooster', bgColor: '#F57C00' },
+  { id: 7, character: '⚓', label: 'Anchor', bgColor: '#00BCD4' },
+  { id: 8, character: '👑', label: 'Queen', bgColor: '#F0F0F0' },
+  { id: 9, character: '🐦', label: 'Phoenix', bgColor: '#FF6F00' },
+  { id: 10, character: '🐻', label: 'Bear', bgColor: '#8B6F47' },
+  { id: 11, character: '🍯', label: 'Treasure', bgColor: '#8B4513' },
+  { id: 12, character: '👾', label: 'Alien', bgColor: '#00A86B' },
+  { id: 13, character: '👻', label: 'Ghost', bgColor: '#B19CD9' },
+  { id: 14, character: '🐝', label: 'Bee', bgColor: '#FFD700' },
+  { id: 15, character: '🌻', label: 'Sunflower', bgColor: '#87CEEB' },
+  { id: 16, character: '🤖', label: 'Droid', bgColor: '#1A237E' },
+  { id: 17, character: '🎭', label: 'Mask', bgColor: '#E91E63' },
 ];
 
 const Account = () => {
@@ -73,6 +97,9 @@ const Account = () => {
   const [autoScan, setAutoScan] = useState(true);
   const [isRefreshingLibrary, setIsRefreshingLibrary] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
+  const [selectedAvatarId, setSelectedAvatarId] = useState(null);
+  const [previewAvatarId, setPreviewAvatarId] = useState(null);
+  const [showAvatarModal, setShowAvatarModal] = useState(false);
 
   const notify = useCallback(message => {
     if (Platform.OS === 'android') {
@@ -84,12 +111,13 @@ const Account = () => {
 
   const loadAccountState = useCallback(async () => {
     try {
-      const [storedName, storedRecentSongs, storedFavSongs, storedAutoScan] =
+      const [storedName, storedRecentSongs, storedFavSongs, storedAutoScan, storedAvatarId] =
         await Promise.all([
           AsyncStorage.getItem('profileName'),
           AsyncStorage.getItem('recentSongs'),
           AsyncStorage.getItem('favSongs'),
           AsyncStorage.getItem('libraryAutoScan'),
+          AsyncStorage.getItem('selectedAvatarId'),
         ]);
 
       setName(storedName || '');
@@ -105,6 +133,12 @@ const Account = () => {
 
       if (storedAutoScan !== null) {
         setAutoScan(storedAutoScan === 'true');
+      }
+
+      if (storedAvatarId !== null) {
+        setSelectedAvatarId(parseInt(storedAvatarId, 10));
+      } else {
+        setSelectedAvatarId(null);
       }
     } catch (error) {
       console.error('Failed to load account state', error);
@@ -232,7 +266,7 @@ const Account = () => {
   const resetAccountPreferences = useCallback(() => {
     Alert.alert(
       'Reset account preferences',
-      'This resets your profile name and theme preferences.',
+      'This resets your profile name, avatar, and theme preferences.',
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -246,11 +280,13 @@ const Account = () => {
                   'libraryAutoScan',
                   'colorTheme',
                   'useDefaultColorTheme',
+                  'selectedAvatarId',
                   ONLINE_LYRICS_STORAGE_KEY,
                 ]);
               setName('');
               setIsEditingName(true);
               setAutoScan(true);
+              setSelectedAvatarId(null);
               setOnlineLyricsEnabled?.(false);
                 if (setAppTheme) {
                   setAppTheme('system');
@@ -304,6 +340,30 @@ const Account = () => {
     [notify, setUseDefaultColorTheme],
   );
 
+  const selectAvatar = useCallback(
+    async avatarId => {
+      try {
+        setSelectedAvatarId(avatarId);
+        await AsyncStorage.setItem('selectedAvatarId', String(avatarId));
+        setShowAvatarModal(false);
+        setPreviewAvatarId(null);
+        notify('Avatar updated!');
+      } catch (error) {
+        console.error('Failed to save avatar', error);
+      }
+    },
+    [notify],
+  );
+
+  const previewAvatar = useCallback(avatarId => {
+    setPreviewAvatarId(avatarId);
+  }, []);
+
+  const openAvatarModal = useCallback(() => {
+    setPreviewAvatarId(selectedAvatarId);
+    setShowAvatarModal(true);
+  }, [selectedAvatarId]);
+
   const displayName = name || 'Your profile';
   const hasSavedName = Boolean(name.trim());
   const initials = displayName
@@ -323,22 +383,12 @@ const Account = () => {
       accent: palette.secondary,
     },
     {
-      key: 'favourites',
-      label: 'Favourites',
-      value: `${favCount}`,
-      helper: 'saved',
-      icon: faHeart,
+      key: 'playlists',
+      label: 'Playlists',
+      value: '3',
+      helper: 'playlists',
+      icon: faLayerGroup,
       accent: palette.accent,
-      onPress: () => navigation.navigate('Favourites'),
-    },
-    {
-      key: 'recent',
-      label: 'Recents',
-      value: `${recentCount}`,
-      helper: 'played',
-      icon: faClockRotateLeft,
-      accent: palette.tertiary,
-      onPress: () => navigation.navigate('RecentHistory'),
     },
   ];
 
@@ -396,16 +446,24 @@ const Account = () => {
         style={[styles.heroCard, { borderColor: palette.border }]}
       >
         <View style={styles.heroTopRow}>
-          <View style={styles.avatarWrap}>
+          <TouchableOpacity 
+            style={styles.avatarWrap}
+            onPress={openAvatarModal}
+            activeOpacity={0.8}
+          >
             <LinearGradient
-              colors={[palette.secondary, palette.accent]}
+              colors={selectedAvatarId !== null ? [AVATARS[selectedAvatarId].bgColor, AVATARS[selectedAvatarId].bgColor] : [palette.secondary, palette.accent]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={styles.avatar}
             >
-              <Text style={styles.avatarText}>{initials}</Text>
+              {selectedAvatarId !== null ? (
+                <Text style={styles.avatarCharacter}>{AVATARS[selectedAvatarId].character}</Text>
+              ) : (
+                <Text style={styles.avatarText}>{initials}</Text>
+              )}
             </LinearGradient>
-          </View>
+          </TouchableOpacity>
           <View style={styles.heroTextWrap}>
             <Text style={[styles.eyebrow, { color: palette.subtext }]}>Heyyy</Text>
             <View style={styles.heroNameRow}>
@@ -447,11 +505,13 @@ const Account = () => {
                     { backgroundColor: `${card.accent}20` },
                   ]}
                 >
-                  <FontAwesomeIcon icon={card.icon} color={card.accent} size={15} />
+                  <FontAwesomeIcon icon={card.icon} color={card.accent} size={18} />
                 </View>
-                <Text style={[styles.metricValue, { color: palette.text }]}>{card.value}</Text>
-                <Text style={[styles.metricLabel, { color: palette.subtext }]}>{card.label}</Text>
-                <Text style={[styles.metricHelper, { color: palette.subtext }]}>{card.helper}</Text>
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.metricValue, { color: palette.text }]}>{card.value}</Text>
+                  <Text style={[styles.metricLabel, { color: palette.subtext }]}>{card.label}</Text>
+                  <Text style={[styles.metricHelper, { color: palette.subtext }]}>{card.helper}</Text>
+                </View>
               </View>
             );
 
@@ -875,6 +935,67 @@ const Account = () => {
           <FontAwesomeIcon icon={faChevronRight} size={14} color={palette.subtext} />
         </TouchableOpacity>
       </View>
+
+      <Modal
+        visible={showAvatarModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => {
+          setShowAvatarModal(false);
+          setPreviewAvatarId(null);
+        }}
+      >
+        <View style={[styles.modalOverlay, { backgroundColor: 'rgba(0, 0, 0, 0.6)' }]}>
+          <View style={[styles.modalContent, { backgroundColor: palette.card, borderColor: palette.border }]}>
+            <View style={styles.modalHeader}>
+              <Text style={[styles.modalTitle, { color: palette.text }]}>Choose Your Avatar</Text>
+              <TouchableOpacity
+                onPress={() => {
+                  setShowAvatarModal(false);
+                  setPreviewAvatarId(null);
+                }}
+                style={styles.modalCloseButton}
+              >
+                <FontAwesomeIcon icon={faTimes} size={20} color={palette.text} />
+              </TouchableOpacity>
+            </View>
+
+            <FlatList
+              data={AVATARS}
+              keyExtractor={item => item.id.toString()}
+              numColumns={4}
+              scrollEnabled={true}
+              contentContainerStyle={styles.avatarGrid}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  onPress={() => previewAvatar(item.id)}
+                  style={[
+                    styles.avatarOption,
+                    {
+                      backgroundColor: item.bgColor,
+                      borderColor: previewAvatarId === item.id ? palette.accent : 'transparent',
+                    },
+                  ]}
+                >
+                  <Text style={styles.avatarOptionCharacter}>{item.character}</Text>
+                  {previewAvatarId === item.id && (
+                    <View style={[styles.avatarCheckmark, { backgroundColor: palette.accent }]}>
+                      <Text style={styles.checkmarkText}>✓</Text>
+                    </View>
+                  )}
+                </TouchableOpacity>
+              )}
+            />
+
+            <TouchableOpacity
+              onPress={() => previewAvatarId !== null && selectAvatar(previewAvatarId)}
+              style={[styles.modalButton, { backgroundColor: previewAvatarId !== null ? palette.accent : palette.surfaceMuted, opacity: previewAvatarId !== null ? 1 : 0.5 }]}
+            >
+              <Text style={[styles.modalButtonText, { color: previewAvatarId !== null ? '#FFFFFF' : palette.subtext }]}>Set Avatar</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
   );
 };
@@ -903,16 +1024,19 @@ const styles = StyleSheet.create({
     marginRight: 16,
   },
   avatar: {
-    width: 72,
-    height: 72,
-    borderRadius: 24,
+    width: 80,
+    height: 80,
+    borderRadius: 40,
     alignItems: 'center',
     justifyContent: 'center',
   },
   avatarText: {
     color: '#FFFFFF',
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: '700',
+  },
+  avatarCharacter: {
+    fontSize: 40,
   },
   heroTextWrap: {
     flex: 1,
@@ -947,34 +1071,37 @@ const styles = StyleSheet.create({
   },
   statsRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    gap: 8,
   },
   metricCard: {
-    width: 101,
+    flex: 1,
     borderWidth: 1,
     borderRadius: 22,
     paddingVertical: 14,
-    paddingHorizontal: 12,
+    paddingHorizontal: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
   },
   metricIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 12,
+    width: 42,
+    height: 42,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 14,
+    flexShrink: 0,
   },
   metricValue: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: '700',
   },
   metricLabel: {
-    marginTop: 4,
-    fontSize: 13,
+    marginTop: 2,
+    fontSize: 12,
     fontWeight: '600',
   },
   metricHelper: {
-    fontSize: 11,
+    fontSize: 10,
     marginTop: 2,
   },
   sectionCard: {
@@ -1119,6 +1246,79 @@ const styles = StyleSheet.create({
   preferenceTextWrap: {
     flex: 1,
     paddingRight: 16,
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    borderWidth: 1,
+    borderBottomLeftRadius: 28,
+    borderBottomRightRadius: 28,
+    maxHeight: '85%',
+    paddingHorizontal: 12,
+    paddingVertical: 16,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+  },
+  modalCloseButton: {
+    padding: 8,
+  },
+  avatarGrid: {
+    paddingHorizontal: 12,
+    paddingBottom: 20,
+    justifyContent: 'center',
+  },
+  avatarOption: {
+    width: '20%',
+    aspectRatio: 1,
+    borderRadius: 16,
+    borderWidth: 3,
+    alignItems: 'center',
+    justifyContent: 'center',
+    margin: 8,
+    position: 'relative',
+  },
+  avatarOptionCharacter: {
+    fontSize: 44,
+  },
+  avatarCheckmark: {
+    position: 'absolute',
+    top: -6,
+    right: -6,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#10B981',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+  },
+  checkmarkText: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  modalButton: {
+    height: 48,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 12,
+  },
+  modalButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '700',
   },
 });
 

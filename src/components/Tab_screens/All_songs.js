@@ -468,9 +468,9 @@ const All_songs = (props) => {
               <FontAwesomeIcon icon={faPlay} size={12} style={{ color: 'white' }} />
               <Text style={styles.playAllText}>Play All</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={[styles.playAllButton, { backgroundColor: palette.surfaceMuted }]} onPress={shuffleSongs}>
-              <FontAwesomeIcon icon={faShuffle} size={12} style={{ color: palette.text }} />
-              <Text style={[styles.playAllText, { color: palette.text }]}>Shuffle</Text>
+            <TouchableOpacity style={[styles.shuffleButton, { borderColor: palette.accent }]} onPress={shuffleSongs}>
+              <FontAwesomeIcon icon={faShuffle} size={14} style={{ color: palette.accent }} />
+              <Text style={[styles.shuffleButtonText, { color: palette.accent }]}>Shuffle</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -731,6 +731,21 @@ const styles = StyleSheet.create({
   actionRow: {
     flexDirection: 'row',
     gap: 10,
+  },
+  shuffleButton: {
+    minHeight: 48,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+    gap: 8,
+    flex: 1,
+    borderWidth: 2,
+    backgroundColor: 'transparent',
+  },
+  shuffleButtonText: {
+    fontSize: 14,
+    fontWeight: '700',
   },
   listContent: {
     paddingHorizontal: 16,
