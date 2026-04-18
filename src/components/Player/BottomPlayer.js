@@ -16,6 +16,7 @@ import {
     View,
     Easing
 } from 'react-native';
+import Svg, { Circle } from 'react-native-svg';
 import useTheme from '../../hooks/useTheme';
 import useResonixTheme from '../../hooks/useResonixTheme';
 import { useNavigation, useNavigationState } from '@react-navigation/native';
@@ -40,6 +41,31 @@ const getActiveRouteName = state => {
     return route.name;
 };
 
+const CircularProgressBar = ({ size, progress, accentColor }) => {
+    const radius = (size - 4) / 2;
+    const circumference = 2 * Math.PI * radius;
+    const strokeDashoffset = circumference - (progress * circumference);
+
+    return (
+        <Svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ position: 'absolute' }}>
+            <Circle
+                cx={size / 2}
+                cy={size / 2}
+                r={radius}
+                stroke={accentColor}
+                strokeWidth="3"
+                fill="none"
+                strokeDasharray={circumference}
+                strokeDashoffset={strokeDashoffset}
+                strokeLinecap="round"
+                rotation={-90}
+                originX={size / 2}
+                originY={size / 2}
+            />
+        </Svg>
+    );
+};
+
 const BottomPlayer = () => {
     const navigation = useNavigation();
     const dispatch = useDispatch()
@@ -56,6 +82,8 @@ const BottomPlayer = () => {
     const [isPlayerReady, setPlayerReady] = useState(false);
     const [playerInitialized, setPlayerInitialized] = useState(false);
     const [isHidden, setIsHidden] = useState(false);
+    const [currentTime, setCurrentTime] = useState(0);
+    const [duration, setDuration] = useState(0);
 
     // make sure the TrackPlayer has been initialized before any operations
     const ensurePlayerInitialized = async () => {
@@ -242,6 +270,29 @@ const BottomPlayer = () => {
         rotate();
     }, [isSongPlaying, rotateAnim]);
 
+    useEffect(() => {
+        const updateProgress = async () => {
+            try {
+                const position = await TrackPlayer.getPosition();
+                const trackDuration = await TrackPlayer.getDuration();
+                setCurrentTime(position);
+                setDuration(trackDuration);
+            } catch (error) {
+                console.error('Error getting track progress:', error);
+            }
+        };
+
+        let interval = null;
+        if (isSongPlaying) {
+            updateProgress();
+            interval = setInterval(updateProgress, 100);
+        }
+
+        return () => {
+            if (interval) clearInterval(interval);
+        };
+    }, [isSongPlaying]);
+
     const spin = rotateAnim.interpolate({
         inputRange: [0, 1],
         outputRange: ['0deg', '360deg'],
@@ -255,7 +306,12 @@ const BottomPlayer = () => {
         <SafeAreaView style={{}}>
             <View style={[styles.bottomPlayer, { backgroundColor: bgTheme, borderColor: palette.border, shadowColor: palette.shadow }]}>
                 <TouchableOpacity style={{ flexDirection: 'row', gap: 10, alignItems: 'center', flex: 1, minWidth: 0 }} onPress={toggleModal}>
-                    <View>
+                    <View style={styles.thumbnailContainer}>
+                        <CircularProgressBar 
+                            size={45} 
+                            progress={duration > 0 ? currentTime / duration : 0} 
+                            accentColor={palette.accent} 
+                        />
                         <SongThumbnail song={selected} size={35} radius={18} textSize={14} />
                     </View>
                     {selected !== null ? (
@@ -306,6 +362,12 @@ const styles = StyleSheet.create({
         shadowRadius: 16,
         shadowOffset: { width: 0, height: 8 },
         elevation: 10,
+    },
+    thumbnailContainer: {
+        width: 45,
+        height: 45,
+        alignItems: 'center',
+        justifyContent: 'center',
     },
     controls: {
         borderRadius: 18,

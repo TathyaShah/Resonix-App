@@ -18,7 +18,7 @@ import { faChevronRight, faHeadphones } from '@fortawesome/free-solid-svg-icons'
 import SongThumbnail from './SongThumbnail';
 import { filterSongsByMood, getSongMoodAssignments, MOOD_OPTIONS } from '../utils/moods';
 
-const MOOD_BORDER_COLORS = {
+const MOOD_ACCENT_COLORS = {
   happy: '#F2B84B',
   sad: '#6E94D6',
   energetic: '#F08A4B',
@@ -131,8 +131,8 @@ const Home = () => {
               style={[
                 styles.moodCard,
                 {
-                  backgroundColor: index % 2 === 0 ? palette.surfaceMuted : palette.surfaceStrong,
-                  borderColor: MOOD_BORDER_COLORS[mood.key] || palette.border,
+                  backgroundColor: palette.surfaceMuted,
+                  borderLeftColor: MOOD_ACCENT_COLORS[mood.key] || palette.accent,
                 },
               ]}
               activeOpacity={0.85}
@@ -269,11 +269,12 @@ const styles = StyleSheet.create({
     width: '48%',
     aspectRatio: 5 / 3,
     maxHeight: 110,
-    borderRadius: 18,
-    borderWidth: 1.5,
-    paddingHorizontal: 14,
-    paddingVertical: 13,
+    borderRadius: 16,
+    borderLeftWidth: 5,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
     justifyContent: 'center',
+    elevation: 1,
   },
   moodEmoji: {
     fontSize: 24,
