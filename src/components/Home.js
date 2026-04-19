@@ -39,14 +39,14 @@ const Home = () => {
     if (parentNavigation) {
       parentNavigation.navigate('MoodSongs', {
         moodKey,
-        autoPlay: true,
+        autoPlay: false,
       });
       return;
     }
 
     navigation.navigate('MoodSongs', {
       moodKey,
-      autoPlay: true,
+      autoPlay: false,
     });
   };
 

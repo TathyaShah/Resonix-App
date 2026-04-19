@@ -429,7 +429,14 @@ const Account = () => {
       title: 'Explore music',
       subtitle: 'Jump back into search and discovery',
       icon: faWaveSquare,
-      onPress: () => navigation.navigate('Search'),
+      onPress: () => {
+        const parentNavigation = navigation.getParent?.();
+        if (parentNavigation) {
+          parentNavigation.navigate('SearchTab');
+        } else {
+          navigation.navigate('SearchTab');
+        }
+      },
     },
   ];
 
