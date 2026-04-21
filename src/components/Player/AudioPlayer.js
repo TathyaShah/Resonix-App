@@ -9,9 +9,13 @@ import {
   StatusBar,
   StyleSheet,
   Text,
+  TextInput,
   ToastAndroid,
   TouchableOpacity,
   View,
+  Modal,
+  Pressable,
+  ScrollView,
 } from 'react-native';
 import {Colors} from 'react-native/Libraries/NewAppScreen';
 import LinearGradient from 'react-native-linear-gradient';
@@ -29,6 +33,10 @@ import {
   faForwardStep,
   faPause,
   faPlay,
+  faShuffle,
+  faPlus,
+  faTimes,
+  faCheck,
 } from '@fortawesome/free-solid-svg-icons';
 import {faHeart as solidHeart} from '@fortawesome/free-solid-svg-icons';
 import {faHeart as regularHeart} from '@fortawesome/free-regular-svg-icons';
@@ -63,6 +71,11 @@ const AudioPlayer = () => {
   const [lyricsData, setLyricsData] = useState(EMPTY_LYRICS);
   const [isLyricsOpen, setIsLyricsOpen] = useState(false);
   const [isLyricsSheetVisible, setIsLyricsSheetVisible] = useState(false);
+  const [playlistModalVisible, setPlaylistModalVisible] = useState(false);
+  const [availablePlaylists, setAvailablePlaylists] = useState([]);
+  const [selectedPlaylists, setSelectedPlaylists] = useState([]);
+  const [newPlaylistName, setNewPlaylistName] = useState('');
+  const [isCreatingPlaylist, setIsCreatingPlaylist] = useState(false);
   const navigation = useNavigation();
   const {isDarkMode} = useTheme();
   const palette = useResonixTheme();
@@ -181,6 +194,113 @@ const AudioPlayer = () => {
       }
     } catch (err) {
       console.error('playPause failed:', err);
+    }
+  };
+
+  const handleShuffle = async () => {
+    try {
+      await ensurePlayerInitialized();
+      const queue = await TrackPlayer.getQueue();
+      if (!queue || queue.length === 0) {
+        ToastAndroid.show('No songs in queue', ToastAndroid.SHORT);
+        return;
+      }
+      
+      const randomIndex = Math.floor(Math.random() * queue.length);
+      await TrackPlayer.skip(randomIndex);
+      await TrackPlayer.play();
+      dispatch(setIsSongPlaying(true));
+      ToastAndroid.show('Playing random song', ToastAndroid.SHORT);
+    } catch (err) {
+      console.error('Shuffle failed:', err);
+      ToastAndroid.show('Shuffle failed', ToastAndroid.SHORT);
+    }
+  };
+
+  const loadAvailablePlaylists = async () => {
+    try {
+      const stored = await AsyncStorage.getItem('userPlaylists');
+      const playlists = stored ? JSON.parse(stored) : [];
+      setAvailablePlaylists(playlists);
+      setSelectedPlaylists([]);
+    } catch (error) {
+      console.error('Failed to load playlists:', error);
+      setAvailablePlaylists([]);
+    }
+  };
+
+  const openPlaylistModal = async () => {
+    await loadAvailablePlaylists();
+    setPlaylistModalVisible(true);
+  };
+
+  const togglePlaylistSelection = (playlistId) => {
+    setSelectedPlaylists(current =>
+      current.includes(playlistId)
+        ? current.filter(id => id !== playlistId)
+        : [...current, playlistId]
+    );
+  };
+
+  const createNewPlaylistAndAdd = async () => {
+    if (!newPlaylistName.trim()) {
+      ToastAndroid.show('Please enter a playlist name', ToastAndroid.SHORT);
+      return;
+    }
+
+    try {
+      const newPlaylist = {
+        id: Date.now().toString(),
+        name: newPlaylistName,
+        songs: [selected],
+        createdAt: new Date().toISOString(),
+      };
+
+      const stored = await AsyncStorage.getItem('userPlaylists');
+      const playlists = stored ? JSON.parse(stored) : [];
+      playlists.push(newPlaylist);
+      await AsyncStorage.setItem('userPlaylists', JSON.stringify(playlists));
+
+      ToastAndroid.show(`Playlist "${newPlaylistName}" created and song added!`, ToastAndroid.SHORT);
+      setNewPlaylistName('');
+      setIsCreatingPlaylist(false);
+      await loadAvailablePlaylists();
+    } catch (error) {
+      console.error('Failed to create playlist:', error);
+      ToastAndroid.show('Failed to create playlist', ToastAndroid.SHORT);
+    }
+  };
+
+  const addSongToSelectedPlaylists = async () => {
+    if (selectedPlaylists.length === 0) {
+      ToastAndroid.show('Please select at least one playlist', ToastAndroid.SHORT);
+      return;
+    }
+
+    try {
+      const stored = await AsyncStorage.getItem('userPlaylists');
+      const playlists = stored ? JSON.parse(stored) : [];
+      
+      const updatedPlaylists = playlists.map(playlist => {
+        if (selectedPlaylists.includes(playlist.id)) {
+          const alreadyExists = playlist.songs?.some(song => song.url === selected.url);
+          if (!alreadyExists) {
+            return {
+              ...playlist,
+              songs: [...(playlist.songs || []), selected],
+            };
+          }
+        }
+        return playlist;
+      });
+
+      await AsyncStorage.setItem('userPlaylists', JSON.stringify(updatedPlaylists));
+      ToastAndroid.show('Song added to selected playlists!', ToastAndroid.SHORT);
+      setPlaylistModalVisible(false);
+      setSelectedPlaylists([]);
+    } catch (error) {
+      console.error('Failed to add song to playlists:', error);
+      ToastAndroid.show('Failed to add song to playlists', ToastAndroid.SHORT);
     }
   };
 
@@ -652,10 +772,22 @@ const AudioPlayer = () => {
 
             <View style={styles.featuresIconContainer}>
               <TouchableOpacity
+                onPress={handleShuffle}
+                style={[
+                  styles.playPousedContainer,
+                  {backgroundColor: 'transparent'},
+                ]}>
+                <FontAwesomeIcon
+                  icon={faShuffle}
+                  size={18}
+                  style={{color: themeColor}}
+                />
+              </TouchableOpacity>
+              <TouchableOpacity
                 onPress={handlePreviousSong}
                 style={[
                   styles.playPousedContainer,
-                  {backgroundColor: 'transparent', marginLeft: -22},
+                  {backgroundColor: 'transparent'},
                 ]}>
                 <FontAwesomeIcon
                   icon={faBackwardStep}
@@ -679,11 +811,23 @@ const AudioPlayer = () => {
                 onPress={handleNextSong}
                 style={[
                   styles.playPousedContainer,
-                  {backgroundColor: 'transparent', marginRight: -22},
+                  {backgroundColor: 'transparent'},
                 ]}>
                 <FontAwesomeIcon
                   icon={faForwardStep}
                   size={22}
+                  style={{color: themeColor}}
+                />
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={openPlaylistModal}
+                style={[
+                  styles.playPousedContainer,
+                  {backgroundColor: 'transparent'},
+                ]}>
+                <FontAwesomeIcon
+                  icon={faPlus}
+                  size={18}
                   style={{color: themeColor}}
                 />
               </TouchableOpacity>
@@ -733,6 +877,200 @@ const AudioPlayer = () => {
               {renderLyricsContent()}
             </Animated.View>
           ) : null}
+
+          <Modal
+            transparent
+            visible={playlistModalVisible}
+            animationType="fade"
+            onRequestClose={() => {
+              setPlaylistModalVisible(false);
+              setNewPlaylistName('');
+              setIsCreatingPlaylist(false);
+            }}>
+            <Pressable
+              style={styles.modalOverlay}
+              onPress={() => {
+                setPlaylistModalVisible(false);
+                setNewPlaylistName('');
+                setIsCreatingPlaylist(false);
+              }}>
+              <Pressable
+                style={[
+                  styles.modalContent,
+                  {
+                    backgroundColor: palette.surface,
+                    borderColor: palette.border,
+                  },
+                ]}
+                onPress={() => {}}>
+                <View style={styles.modalHeader}>
+                  <Text
+                    style={[styles.modalTitle, {color: palette.text}]}>
+                    Add to Playlist
+                  </Text>
+                  <TouchableOpacity
+                    onPress={() => {
+                      setPlaylistModalVisible(false);
+                      setNewPlaylistName('');
+                      setIsCreatingPlaylist(false);
+                    }}
+                    style={[
+                      styles.modalCloseButton,
+                      {backgroundColor: palette.surfaceMuted},
+                    ]}>
+                    <FontAwesomeIcon
+                      icon={faTimes}
+                      size={14}
+                      color={palette.text}
+                    />
+                  </TouchableOpacity>
+                </View>
+
+                {!isCreatingPlaylist ? (
+                  <ScrollView style={styles.playlistsContainer}>
+                    <TouchableOpacity
+                      onPress={() => setIsCreatingPlaylist(true)}
+                      style={[
+                        styles.createPlaylistButton,
+                        {backgroundColor: palette.accentSoft, borderColor: palette.accent},
+                      ]}>
+                      <FontAwesomeIcon
+                        icon={faPlus}
+                        size={16}
+                        color={palette.accent}
+                      />
+                      <Text style={[styles.createPlaylistText, {color: palette.accent}]}>
+                        Create New Playlist
+                      </Text>
+                    </TouchableOpacity>
+
+                    {availablePlaylists.length === 0 ? (
+                      <Text style={[styles.emptyText, {color: palette.subtext}]}>
+                        No playlists available. Create one to add this song!
+                      </Text>
+                    ) : (
+                      availablePlaylists.map(playlist => (
+                        <TouchableOpacity
+                          key={playlist.id}
+                          onPress={() => togglePlaylistSelection(playlist.id)}
+                          style={[
+                            styles.playlistItem,
+                            {
+                              backgroundColor: selectedPlaylists.includes(
+                                playlist.id,
+                              )
+                                ? palette.accentSoft
+                                : palette.surfaceMuted,
+                              borderColor: selectedPlaylists.includes(
+                                playlist.id,
+                              )
+                                ? palette.accent
+                                : palette.border,
+                            },
+                          ]}>
+                          <View style={styles.playlistItemLeft}>
+                            <Text
+                              style={[
+                                styles.playlistName,
+                                {color: palette.text},
+                              ]}>
+                              {playlist.name}
+                            </Text>
+                            <Text
+                              style={[
+                                styles.playlistSongCount,
+                                {color: palette.subtext},
+                              ]}>
+                              {playlist.songs?.length || 0} songs
+                            </Text>
+                          </View>
+                          <View
+                            style={[
+                              styles.checkbox,
+                              {
+                                backgroundColor: selectedPlaylists.includes(
+                                  playlist.id,
+                                )
+                                  ? palette.accent
+                                  : 'transparent',
+                                borderColor: selectedPlaylists.includes(
+                                  playlist.id,
+                                )
+                                  ? palette.accent
+                                  : palette.subtext,
+                              },
+                            ]}>
+                            {selectedPlaylists.includes(playlist.id) ? (
+                              <FontAwesomeIcon
+                                icon={faCheck}
+                                size={12}
+                                color="#fff"
+                              />
+                            ) : null}
+                          </View>
+                        </TouchableOpacity>
+                      ))
+                    )}
+                  </ScrollView>
+                ) : (
+                  <View style={styles.createPlaylistForm}>
+                    <TextInput
+                      style={[
+                        styles.playlistInput,
+                        {
+                          backgroundColor: palette.surfaceMuted,
+                          borderColor: palette.border,
+                          color: palette.text,
+                        },
+                      ]}
+                      placeholder="Enter playlist name"
+                      placeholderTextColor={palette.subtext}
+                      value={newPlaylistName}
+                      onChangeText={setNewPlaylistName}
+                    />
+                    <View style={styles.createPlaylistButtonsRow}>
+                      <TouchableOpacity
+                        onPress={() => {
+                          setIsCreatingPlaylist(false);
+                          setNewPlaylistName('');
+                        }}
+                        style={[
+                          styles.cancelButton,
+                          {backgroundColor: palette.surfaceMuted},
+                        ]}>
+                        <Text style={[styles.buttonText, {color: palette.text}]}>
+                          Cancel
+                        </Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        onPress={createNewPlaylistAndAdd}
+                        style={[
+                          styles.confirmButton,
+                          {backgroundColor: palette.accent},
+                        ]}>
+                        <Text style={[styles.buttonText, {color: '#fff'}]}>
+                          Create & Add
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                )}
+
+                {!isCreatingPlaylist && selectedPlaylists.length > 0 && (
+                  <TouchableOpacity
+                    onPress={addSongToSelectedPlaylists}
+                    style={[
+                      styles.addButton,
+                      {backgroundColor: palette.accent},
+                    ]}>
+                    <Text style={styles.addButtonText}>
+                      Add to {selectedPlaylists.length} Playlist{selectedPlaylists.length !== 1 ? 's' : ''}
+                    </Text>
+                  </TouchableOpacity>
+                )}
+              </Pressable>
+            </Pressable>
+          </Modal>
         </View>
       </LinearGradient>
     </View>
@@ -843,7 +1181,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   playPousedContainer: {
-    padding: 20,
+    padding: 16,
     backgroundColor: 'white',
     borderRadius: 50,
     flexDirection: 'column',
@@ -911,6 +1249,130 @@ const styles = StyleSheet.create({
     lineHeight: 24,
     textAlign: 'center',
     fontWeight: '600',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    paddingHorizontal: 16,
+  },
+  modalContent: {
+    borderRadius: 24,
+    borderWidth: 1,
+    padding: 20,
+    maxHeight: '80%',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+  },
+  modalCloseButton: {
+    width: 34,
+    height: 34,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  playlistsContainer: {
+    maxHeight: '60%',
+    marginBottom: 12,
+  },
+  playlistItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 14,
+    marginBottom: 10,
+    borderRadius: 14,
+    borderWidth: 1,
+  },
+  playlistItemLeft: {
+    flex: 1,
+  },
+  playlistName: {
+    fontSize: 15,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  playlistSongCount: {
+    fontSize: 12,
+  },
+  checkbox: {
+    width: 22,
+    height: 22,
+    borderRadius: 7,
+    borderWidth: 1.5,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 12,
+  },
+  createPlaylistButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    padding: 14,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    marginBottom: 16,
+    justifyContent: 'center',
+  },
+  createPlaylistText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  createPlaylistForm: {
+    gap: 12,
+    marginBottom: 12,
+  },
+  playlistInput: {
+    borderWidth: 1,
+    borderRadius: 12,
+    padding: 14,
+    fontSize: 14,
+  },
+  createPlaylistButtonsRow: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  cancelButton: {
+    flex: 1,
+    padding: 12,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  confirmButton: {
+    flex: 1,
+    padding: 12,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  buttonText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  addButton: {
+    padding: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  addButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  emptyText: {
+    fontSize: 14,
+    textAlign: 'center',
+    marginVertical: 16,
   },
 });
 

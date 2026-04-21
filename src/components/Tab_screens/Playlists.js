@@ -1,6 +1,8 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useCallback } from 'react';
 import { ScrollView, StyleSheet, Text, ToastAndroid, TouchableOpacity, View } from 'react-native';
 import { useSelector } from 'react-redux';
+import { useFocusEffect } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import {
   faAngleRight,
@@ -17,11 +19,6 @@ import {
   setPlaylistMoods,
 } from '../../utils/moods';
 
-const PLAYLIST_ITEMS = [
-  { id: 'fav', name: 'Favorites Mix', description: 'Quick access to the songs you love most.' },
-  { id: '1', name: 'Workout', description: 'High-energy tracks for motion and momentum.' },
-  { id: '2', name: 'Chill', description: 'Easy listening for slower moments.' },
-];
 
 const PlaylistsHub = ({ navigation }) => {
   const palette = useResonixTheme();
@@ -30,6 +27,24 @@ const PlaylistsHub = ({ navigation }) => {
   const [selectedPlaylist, setSelectedPlaylist] = useState(null);
   const [selectedMoods, setSelectedMoods] = useState([]);
   const [moodModalVisible, setMoodModalVisible] = useState(false);
+  const [userPlaylists, setUserPlaylists] = useState([]);
+
+  const loadUserPlaylists = useCallback(async () => {
+    try {
+      const stored = await AsyncStorage.getItem('userPlaylists');
+      const playlists = stored ? JSON.parse(stored) : [];
+      setUserPlaylists(playlists);
+    } catch (error) {
+      console.error('Failed to load user playlists:', error);
+      setUserPlaylists([]);
+    }
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      loadUserPlaylists();
+    }, [loadUserPlaylists]),
+  );
 
   const artists = useMemo(
     () =>
@@ -125,33 +140,39 @@ const PlaylistsHub = ({ navigation }) => {
       </View>
 
       <View style={styles.playlistsList}>
-        {PLAYLIST_ITEMS.map(item => (
-          <View
-            key={item.id}
-            style={[styles.playlistRow, { backgroundColor: palette.surface, borderColor: palette.border }]}
-          >
-            <TouchableOpacity style={styles.playlistRowMain} activeOpacity={0.88} onPress={() => openPlaylist(item)}>
-              <View style={[styles.playlistIconWrap, { backgroundColor: palette.surfaceMuted }]}>
-                <FontAwesomeIcon icon={faCompactDisc} size={16} color={palette.accent} />
-              </View>
-              <View style={styles.playlistTextWrap}>
-                <Text style={[styles.playlistName, { color: palette.text }]}>{item.name}</Text>
-                <Text style={[styles.playlistDescription, { color: palette.subtext }]} numberOfLines={2}>
-                  {item.description}
-                </Text>
-              </View>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.actionButton, { backgroundColor: palette.surfaceMuted }]}
-              onPress={() => openMoodAssignment(item)}
+        {userPlaylists.length === 0 ? (
+          <Text style={[styles.emptyStateText, { color: palette.subtext }]}>
+            No playlists yet. Create one from the player to get started!
+          </Text>
+        ) : (
+          userPlaylists.map(item => (
+            <View
+              key={item.id}
+              style={[styles.playlistRow, { backgroundColor: palette.surface, borderColor: palette.border }]}
             >
-              <Text style={[styles.actionText, { color: palette.accent }]}>Mood</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.chevronButton} onPress={() => openPlaylist(item)}>
-              <FontAwesomeIcon icon={faAngleRight} size={16} color={palette.subtext} />
-            </TouchableOpacity>
-          </View>
-        ))}
+              <TouchableOpacity style={styles.playlistRowMain} activeOpacity={0.88} onPress={() => openPlaylist(item)}>
+                <View style={[styles.playlistIconWrap, { backgroundColor: palette.surfaceMuted }]}>
+                  <FontAwesomeIcon icon={faCompactDisc} size={16} color={palette.accent} />
+                </View>
+                <View style={styles.playlistTextWrap}>
+                  <Text style={[styles.playlistName, { color: palette.text }]}>{item.name}</Text>
+                  <Text style={[styles.playlistDescription, { color: palette.subtext }]} numberOfLines={2}>
+                    {item.songs?.length || 0} songs
+                  </Text>
+                </View>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.actionButton, { backgroundColor: palette.surfaceMuted }]}
+                onPress={() => openMoodAssignment(item)}
+              >
+                <Text style={[styles.actionText, { color: palette.accent }]}>Mood</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.chevronButton} onPress={() => openPlaylist(item)}>
+                <FontAwesomeIcon icon={faAngleRight} size={16} color={palette.subtext} />
+              </TouchableOpacity>
+            </View>
+          ))
+        )}
       </View>
 
       <MoodAssignmentModal
@@ -253,6 +274,12 @@ const styles = StyleSheet.create({
     width: 28,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  emptyStateText: {
+    fontSize: 14,
+    textAlign: 'center',
+    marginTop: 16,
+    fontWeight: '500',
   },
 });
 
