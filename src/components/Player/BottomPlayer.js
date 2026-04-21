@@ -1,14 +1,15 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import TextTicker from 'react-native-text-ticker';
 import { Colors } from 'react-native/Libraries/NewAppScreen';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import { faPlay, faForwardStep, faPause, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faBackwardStep, faPlay, faForwardStep, faPause } from '@fortawesome/free-solid-svg-icons';
 import { useDispatch, useSelector } from 'react-redux'
 import { selectedSong, setIsSongPlaying } from '../../redux/action';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import TrackPlayer, { } from 'react-native-track-player';
 import {
     Animated,
+    PanResponder,
     SafeAreaView,
     StyleSheet,
     Text,
@@ -84,6 +85,7 @@ const BottomPlayer = () => {
     const [isHidden, setIsHidden] = useState(false);
     const [currentTime, setCurrentTime] = useState(0);
     const [duration, setDuration] = useState(0);
+    const swipeTranslateX = useRef(new Animated.Value(0)).current;
 
     // make sure the TrackPlayer has been initialized before any operations
     const ensurePlayerInitialized = async () => {
@@ -211,6 +213,17 @@ const BottomPlayer = () => {
         }
     };
 
+    const handlePreviousSong = async () => {
+        try {
+            await ensurePlayerInitialized();
+            await TrackPlayer.skipToPrevious();
+            await TrackPlayer.play();
+            dispatch(setIsSongPlaying(true));
+        } catch (err) {
+            console.error('Previous song failed:', err);
+        }
+    };
+
 
 
     const playPause = async () => {
@@ -234,6 +247,7 @@ const BottomPlayer = () => {
             await TrackPlayer.pause();
             dispatch(setIsSongPlaying(false));
             setIsHidden(true);
+            swipeTranslateX.setValue(0);
         } catch (error) {
             console.error('closePlayer failed:', error);
         }
@@ -298,13 +312,67 @@ const BottomPlayer = () => {
         outputRange: ['0deg', '360deg'],
     });
 
-    if (isHidden || !selected || currentRouteName === 'AudioPlayer') {
+    const playerPanResponder = useMemo(
+        () =>
+            PanResponder.create({
+                onMoveShouldSetPanResponder: (_, gestureState) =>
+                    Math.abs(gestureState.dx) > 8 && Math.abs(gestureState.dx) > Math.abs(gestureState.dy),
+                onPanResponderMove: (_, gestureState) => {
+                    swipeTranslateX.setValue(gestureState.dx);
+                },
+                onPanResponderRelease: async (_, gestureState) => {
+                    const dismissThreshold = 110;
+
+                    if (Math.abs(gestureState.dx) >= dismissThreshold) {
+                        Animated.timing(swipeTranslateX, {
+                            toValue: gestureState.dx > 0 ? 420 : -420,
+                            duration: 180,
+                            useNativeDriver: true,
+                        }).start(() => {
+                            closePlayer();
+                        });
+                        return;
+                    }
+
+                    Animated.spring(swipeTranslateX, {
+                        toValue: 0,
+                        useNativeDriver: true,
+                        friction: 7,
+                        tension: 70,
+                    }).start();
+                },
+            }),
+        [swipeTranslateX],
+    );
+
+    if (
+        isHidden ||
+        !selected ||
+        currentRouteName === 'AudioPlayer' ||
+        currentRouteName === 'AccountScreen'
+    ) {
         return null;
     }
 
     return (
         <SafeAreaView style={{}}>
-            <View style={[styles.bottomPlayer, { backgroundColor: bgTheme, borderColor: palette.border, shadowColor: palette.shadow }]}>
+            <Animated.View
+                {...playerPanResponder.panHandlers}
+                style={[
+                    styles.bottomPlayer,
+                    {
+                        backgroundColor: bgTheme,
+                        borderColor: palette.border,
+                        shadowColor: palette.shadow,
+                        transform: [{ translateX: swipeTranslateX }],
+                        opacity: swipeTranslateX.interpolate({
+                            inputRange: [-180, 0, 180],
+                            outputRange: [0.7, 1, 0.7],
+                            extrapolate: 'clamp',
+                        }),
+                    },
+                ]}
+            >
                 <TouchableOpacity style={{ flexDirection: 'row', gap: 10, alignItems: 'center', flex: 1, minWidth: 0 }} onPress={toggleModal}>
                     <View style={styles.thumbnailContainer}>
                         <CircularProgressBar 
@@ -327,17 +395,17 @@ const BottomPlayer = () => {
                     )}
                 </TouchableOpacity>
                 <View style={{ flexDirection: 'row', gap: 4, alignItems: 'center' }}>
-                    <TouchableOpacity onPress={() => playPause()} style={[styles.controls, { backgroundColor: palette.surfaceMuted }]}>
-                        <FontAwesomeIcon icon={isSongPlaying === true ? faPause : faPlay} size={18} style={{ color: themeColor, alignSelf: 'center' }} />
+                    <TouchableOpacity onPress={handlePreviousSong} style={[styles.controls, { backgroundColor: palette.surfaceMuted }]}>
+                        <FontAwesomeIcon icon={faBackwardStep} size={16} style={{ color: themeColor }} />
                     </TouchableOpacity>
-                    <TouchableOpacity onPress={handleNextSong} style={[styles.controls, { backgroundColor: palette.accent }]}>
-                        <FontAwesomeIcon icon={faForwardStep} size={18} style={{ color: '#fff' }} />
+                    <TouchableOpacity onPress={() => playPause()} style={[styles.controls, { backgroundColor: palette.accent }]}>
+                        <FontAwesomeIcon icon={isSongPlaying === true ? faPause : faPlay} size={18} style={{ color: '#fff', alignSelf: 'center' }} />
                     </TouchableOpacity>
-                    <TouchableOpacity onPress={closePlayer} style={[styles.controls, { backgroundColor: palette.surfaceMuted }]}>
-                        <FontAwesomeIcon icon={faTimes} size={16} style={{ color: themeColor }} />
+                    <TouchableOpacity onPress={handleNextSong} style={[styles.controls, { backgroundColor: palette.surfaceMuted }]}>
+                        <FontAwesomeIcon icon={faForwardStep} size={18} style={{ color: themeColor }} />
                     </TouchableOpacity>
                 </View>
-            </View>
+            </Animated.View>
         </SafeAreaView >
     )
 }

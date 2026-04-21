@@ -133,6 +133,7 @@ const Home = () => {
                 {
                   backgroundColor: palette.surfaceMuted,
                   borderLeftColor: MOOD_ACCENT_COLORS[mood.key] || palette.accent,
+                  // borderBottomColor: MOOD_ACCENT_COLORS[mood.key] || palette.accent,
                 },
               ]}
               activeOpacity={0.85}
@@ -271,6 +272,7 @@ const styles = StyleSheet.create({
     maxHeight: 110,
     borderRadius: 16,
     borderLeftWidth: 5,
+    // borderBottomWidth: 5,
     paddingHorizontal: 16,
     paddingVertical: 14,
     justifyContent: 'center',

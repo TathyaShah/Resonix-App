@@ -593,13 +593,15 @@ const All_songs = (props) => {
 
         <View style={styles.actionWrap}>
           <View style={styles.actionRow}>
-            <TouchableOpacity style={[styles.playAllButton, { backgroundColor: palette.accent }]} onPress={playAllSongs}>
-              <FontAwesomeIcon icon={faPlay} size={12} style={{ color: 'white' }} />
-              <Text style={styles.playAllText}>Play All</Text>
+            <TouchableOpacity style={styles.playAllButton} onPress={playAllSongs}>
+              <View style={[styles.playAllIconWrap, { backgroundColor: palette.accent }]}>
+                <FontAwesomeIcon icon={faPlay} size={10} style={{ color: '#fff' }} />
+              </View>
+              <Text style={[styles.playAllText, { color: palette.text }]}>Play All</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={[styles.shuffleButton, { borderColor: palette.accent }]} onPress={shuffleSongs}>
+            <TouchableOpacity style={styles.shuffleButton} onPress={shuffleSongs}>
               <FontAwesomeIcon icon={faShuffle} size={14} style={{ color: palette.accent }} />
-              <Text style={[styles.shuffleButtonText, { color: palette.accent }]}>Shuffle</Text>
+              <Text style={[styles.shuffleButtonText, { color: palette.text }]}>Shuffle</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -1001,32 +1003,33 @@ const styles = StyleSheet.create({
     marginBottom: 0,
   },
   playAllButton: {
-    minHeight: 48,
-    borderRadius: 16,
+    minHeight: 28,
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    flexDirection: 'row',
+    gap: 6,
+  },
+  playAllIconWrap: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
     alignItems: 'center',
     justifyContent: 'center',
-    flexDirection: 'row',
-    gap: 8,
-    flex: 1,
   },
   actionRow: {
     flexDirection: 'row',
-    gap: 10,
+    gap: 18,
   },
   shuffleButton: {
-    minHeight: 48,
-    borderRadius: 16,
+    minHeight: 28,
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
     flexDirection: 'row',
-    gap: 8,
-    flex: 1,
-    borderWidth: 2,
-    backgroundColor: 'transparent',
+    gap: 6,
   },
   shuffleButtonText: {
-    fontSize: 14,
-    fontWeight: '700',
+    fontSize: 13,
+    fontWeight: '600',
   },
   listContent: {
     paddingHorizontal: 16,
@@ -1037,9 +1040,8 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   playAllText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '700',
+    fontSize: 13,
+    fontWeight: '600',
   },
   songRow: {
     flexDirection: 'row',

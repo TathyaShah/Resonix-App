@@ -442,7 +442,7 @@ const Account = () => {
 
   return (
     <ScrollView
-      style={[styles.screen, { backgroundColor: palette.background }]}
+      style={[styles.screen, styles.accountScreen, { backgroundColor: palette.background }]}
       contentContainerStyle={styles.contentContainer}
       showsVerticalScrollIndicator={false}
     >
@@ -1011,10 +1011,13 @@ const styles = StyleSheet.create({
   screen: {
     flex: 1,
   },
+  accountScreen: {
+    marginBottom: -120,
+  },
   contentContainer: {
     paddingHorizontal: 16,
     paddingTop: 16,
-    paddingBottom: 140,
+    paddingBottom: 20,
     gap: 16,
   },
   heroCard: {
