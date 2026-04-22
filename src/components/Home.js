@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, {useEffect, useMemo, useState} from 'react';
 import {
   View,
   Text,
@@ -9,14 +9,19 @@ import {
 } from 'react-native';
 import useResonixTheme from '../hooks/useResonixTheme';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useNavigation } from '@react-navigation/native';
-import { useDispatch, useSelector } from 'react-redux';
-import { selectedSong, setIsSongPlaying } from '../redux/action';
+import {useNavigation} from '@react-navigation/native';
+import {useDispatch, useSelector} from 'react-redux';
+import {selectedSong, setIsSongPlaying} from '../redux/action';
 import TrackPlayer from 'react-native-track-player';
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import { faChevronRight, faHeadphones } from '@fortawesome/free-solid-svg-icons';
+import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
+import {faChevronRight, faHeadphones} from '@fortawesome/free-solid-svg-icons';
 import SongThumbnail from './SongThumbnail';
-import { filterSongsByMood, getSongMoodAssignments, MOOD_OPTIONS } from '../utils/moods';
+import {
+  filterSongsByMood,
+  getSongMoodAssignments,
+  MOOD_OPTIONS,
+} from '../utils/moods';
+import {getTrackIndexByUrl} from '../utils/trackPlayer';
 
 const MOOD_ACCENT_COLORS = {
   happy: '#F2B84B',
@@ -79,12 +84,15 @@ const Home = () => {
     [allSongs, moodAssignments],
   );
 
-  const renderItem = ({ item }) => {
+  const renderItem = ({item}) => {
     const playSong = async () => {
       dispatch(selectedSong(item));
       dispatch(setIsSongPlaying(true));
       try {
-        await TrackPlayer.skip(item.id ? item.id : 0);
+        const trackIndex = await getTrackIndexByUrl(item.url);
+        if (trackIndex !== -1) {
+          await TrackPlayer.skip(trackIndex);
+        }
         await TrackPlayer.play();
       } catch (error) {
         await TrackPlayer.play();
@@ -94,11 +102,19 @@ const Home = () => {
 
     return (
       <TouchableOpacity style={styles.card} onPress={playSong}>
-        <SongThumbnail song={item} width={96} height={72} radius={14} textSize={24} />
-        <Text style={[styles.title, { color: palette.text }]} numberOfLines={1}>
+        <SongThumbnail
+          song={item}
+          width={96}
+          height={72}
+          radius={14}
+          textSize={24}
+        />
+        <Text style={[styles.title, {color: palette.text}]} numberOfLines={1}>
           {item.title}
         </Text>
-        <Text style={[styles.subtitle, { color: palette.subtext }]} numberOfLines={1}>
+        <Text
+          style={[styles.subtitle, {color: palette.subtext}]}
+          numberOfLines={1}>
           {item.album || item.artist}
         </Text>
       </TouchableOpacity>
@@ -107,21 +123,27 @@ const Home = () => {
 
   return (
     <ScrollView
-      style={{ flex: 1, backgroundColor: palette.background }}
+      style={{flex: 1, backgroundColor: palette.background}}
       contentContainerStyle={styles.container}
-      showsVerticalScrollIndicator={false}
-    >
+      showsVerticalScrollIndicator={false}>
       <View
         style={[
           styles.sectionCard,
-          { backgroundColor: palette.surface, borderColor: palette.border },
-        ]}
-      >
+          {backgroundColor: palette.surface, borderColor: palette.border},
+        ]}>
         <View style={styles.sectionHeaderRow}>
-          <Text style={[styles.sectionTitle, { color: palette.text }]}>What&apos;s your mood?</Text>
-          <View style={[styles.badge, { backgroundColor: palette.surfaceMuted }]}>
-            <FontAwesomeIcon icon={faHeadphones} size={12} color={palette.accent} />
-            <Text style={[styles.badgeText, { color: palette.subtext }]}>Curated</Text>
+          <Text style={[styles.sectionTitle, {color: palette.text}]}>
+            What&apos;s your mood?
+          </Text>
+          <View style={[styles.badge, {backgroundColor: palette.surfaceMuted}]}>
+            <FontAwesomeIcon
+              icon={faHeadphones}
+              size={12}
+              color={palette.accent}
+            />
+            <Text style={[styles.badgeText, {color: palette.subtext}]}>
+              Curated
+            </Text>
           </View>
         </View>
         <View style={styles.moodGrid}>
@@ -132,16 +154,18 @@ const Home = () => {
                 styles.moodCard,
                 {
                   backgroundColor: palette.surfaceMuted,
-                  borderLeftColor: MOOD_ACCENT_COLORS[mood.key] || palette.accent,
+                  borderLeftColor:
+                    MOOD_ACCENT_COLORS[mood.key] || palette.accent,
                   // borderBottomColor: MOOD_ACCENT_COLORS[mood.key] || palette.accent,
                 },
               ]}
               activeOpacity={0.85}
-              onPress={() => openMoodScreen(mood.key)}
-            >
+              onPress={() => openMoodScreen(mood.key)}>
               <View>
-                <Text style={[styles.moodLabel, { color: palette.text }]}>{mood.label}</Text>
-                <Text style={[styles.moodCount, { color: palette.subtext }]}>
+                <Text style={[styles.moodLabel, {color: palette.text}]}>
+                  {mood.label}
+                </Text>
+                <Text style={[styles.moodCount, {color: palette.subtext}]}>
                   {mood.count ? `${mood.count} songs` : 'No songs yet'}
                 </Text>
               </View>
@@ -153,22 +177,30 @@ const Home = () => {
       <View
         style={[
           styles.sectionCard,
-          { backgroundColor: palette.surface, borderColor: palette.border },
-        ]}
-      >
+          {backgroundColor: palette.surface, borderColor: palette.border},
+        ]}>
         <View style={styles.header}>
           <View style={styles.sectionHeaderRow}>
             <View style={styles.recentTitleWrap}>
-              <Text style={[styles.headerText, { color: palette.text }]}>Recently Played</Text>
-              <View style={[styles.counterBadge, { backgroundColor: palette.accent }]}>
+              <Text style={[styles.headerText, {color: palette.text}]}>
+                Recently Played
+              </Text>
+              <View
+                style={[
+                  styles.counterBadge,
+                  {backgroundColor: palette.accent},
+                ]}>
                 <Text style={styles.counterText}>{recent.length}</Text>
               </View>
             </View>
             <TouchableOpacity
               onPress={() => navigation.navigate('RecentHistory')}
-              style={styles.recentArrow}
-            >
-              <FontAwesomeIcon icon={faChevronRight} size={16} color={palette.accent} />
+              style={styles.recentArrow}>
+              <FontAwesomeIcon
+                icon={faChevronRight}
+                size={16}
+                color={palette.accent}
+              />
             </TouchableOpacity>
           </View>
         </View>
@@ -183,11 +215,15 @@ const Home = () => {
             <View
               style={[
                 styles.emptyCard,
-                { backgroundColor: palette.surfaceMuted, borderColor: palette.border },
-              ]}
-            >
-              <Text style={[styles.emptyTitle, { color: palette.text }]}>No recent tracks yet</Text>
-              <Text style={[styles.emptySubtitle, { color: palette.subtext }]}>
+                {
+                  backgroundColor: palette.surfaceMuted,
+                  borderColor: palette.border,
+                },
+              ]}>
+              <Text style={[styles.emptyTitle, {color: palette.text}]}>
+                No recent tracks yet
+              </Text>
+              <Text style={[styles.emptySubtitle, {color: palette.subtext}]}>
                 Start playing music and your history will appear here.
               </Text>
             </View>
@@ -242,7 +278,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  headerText: { fontSize: 20, fontWeight: '700' },
+  headerText: {fontSize: 20, fontWeight: '700'},
   sectionTitle: {
     fontSize: 18,
     fontWeight: '700',
@@ -290,10 +326,10 @@ const styles = StyleSheet.create({
     fontSize: 11,
     marginTop: 4,
   },
-  card: { width: 96, marginRight: 14 },
-  recentListContent: { paddingTop: 10, paddingBottom: 2, paddingRight: 6 },
-  title: { marginTop: 8, fontSize: 12, fontWeight: '600' },
-  subtitle: { fontSize: 10, marginTop: 4 },
+  card: {width: 96, marginRight: 14},
+  recentListContent: {paddingTop: 10, paddingBottom: 2, paddingRight: 6},
+  title: {marginTop: 8, fontSize: 12, fontWeight: '600'},
+  subtitle: {fontSize: 10, marginTop: 4},
   emptyCard: {
     width: 280,
     borderWidth: 1,

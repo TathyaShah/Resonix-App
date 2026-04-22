@@ -1,28 +1,66 @@
-import React, { useCallback, useState, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, FlatList, ToastAndroid, Modal, Pressable, TouchableWithoutFeedback, SafeAreaView, PanResponder, PermissionsAndroid, TextInput, ScrollView } from 'react-native';
+import React, {useCallback, useState, useRef} from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  FlatList,
+  ToastAndroid,
+  Modal,
+  Pressable,
+  TouchableWithoutFeedback,
+  SafeAreaView,
+  PanResponder,
+  PermissionsAndroid,
+  TextInput,
+  ScrollView,
+} from 'react-native';
 import TextTicker from 'react-native-text-ticker';
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import { faArrowLeft, faCompactDisc, faPlay, faShuffle, faEllipsisVertical, faTimes, faHeart, faMusic, faShareAlt, faInfoCircle, faTrashCan, faPlus, faCheck } from '@fortawesome/free-solid-svg-icons';
+import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
+import {
+  faArrowLeft,
+  faCompactDisc,
+  faPlay,
+  faShuffle,
+  faEllipsisVertical,
+  faTimes,
+  faHeart,
+  faMusic,
+  faShareAlt,
+  faInfoCircle,
+  faTrashCan,
+  faPlus,
+  faCheck,
+} from '@fortawesome/free-solid-svg-icons';
 import TrackPlayer from 'react-native-track-player';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useDispatch, useSelector } from 'react-redux';
-import { selectedSong, setIsSongPlaying, setFavouritesSongs } from '../../redux/action';
+import {useDispatch, useSelector} from 'react-redux';
+import {
+  selectedSong,
+  setIsSongPlaying,
+  setFavouritesSongs,
+} from '../../redux/action';
 import useResonixTheme from '../../hooks/useResonixTheme';
 import useTheme from '../../hooks/useTheme';
 import SongThumbnail from '../SongThumbnail';
 import MoodAssignmentModal from '../MoodAssignmentModal';
-import { getAssignedMoodsForSong, getSongMoodAssignments, setSongMoods } from '../../utils/moods';
+import {
+  getAssignedMoodsForSong,
+  getSongMoodAssignments,
+  setSongMoods,
+} from '../../utils/moods';
 import Share from 'react-native-share';
 import RNFS from 'react-native-fs';
+import {normalizeTracks} from '../../utils/trackPlayer';
 
-const PlaylistDetail = ({ route, navigation }) => {
-  const { playlist } = route.params || {};
+const PlaylistDetail = ({route, navigation}) => {
+  const {playlist} = route.params || {};
   const palette = useResonixTheme();
-  const { isDarkMode } = useTheme();
+  const {isDarkMode} = useTheme();
   const dispatch = useDispatch();
-  const selectedItem = useSelector((state) => state.selectedSongReducer);
-  const isSongPlaying = useSelector((state) => state.isSongPlaying);
-  
+  const selectedItem = useSelector(state => state.selectedSongReducer);
+  const isSongPlaying = useSelector(state => state.isSongPlaying);
+
   const songs = playlist?.songs || [];
   const themeColor = isDarkMode ? '#fff' : '#000';
   const dimColorTheme = isDarkMode ? '#ccc' : '#666';
@@ -53,10 +91,10 @@ const PlaylistDetail = ({ route, navigation }) => {
           setPlaylistModalVisible(false);
         }
       },
-    })
+    }),
   ).current;
 
-  const updateRecent = async (song) => {
+  const updateRecent = async song => {
     try {
       let arr = [];
       const stored = await AsyncStorage.getItem('recentSongs');
@@ -70,7 +108,7 @@ const PlaylistDetail = ({ route, navigation }) => {
     }
   };
 
-  const storeSelectedSong = async (song) => {
+  const storeSelectedSong = async song => {
     try {
       if (song) {
         await AsyncStorage.setItem('lastPlayedSong', JSON.stringify(song));
@@ -80,7 +118,7 @@ const PlaylistDetail = ({ route, navigation }) => {
     }
   };
 
-  const handleSongItem = async (item) => {
+  const handleSongItem = async item => {
     setOptionModalVisible(false);
     if (selectedItem && selectedItem.url === item.url && isSongPlaying) {
       ToastAndroid.show('Already Playing...', ToastAndroid.SHORT);
@@ -99,15 +137,16 @@ const PlaylistDetail = ({ route, navigation }) => {
         ToastAndroid.show('No songs in playlist', ToastAndroid.SHORT);
         return;
       }
+      const normalizedSongs = normalizeTracks(songs);
       await TrackPlayer.stop();
       await TrackPlayer.reset();
-      await TrackPlayer.add(songs);
+      await TrackPlayer.add(normalizedSongs);
       await TrackPlayer.skip(0);
-      dispatch(selectedSong(songs[0]));
-      await storeSelectedSong(songs[0]);
+      dispatch(selectedSong(normalizedSongs[0]));
+      await storeSelectedSong(normalizedSongs[0]);
       dispatch(setIsSongPlaying(true));
       await TrackPlayer.play();
-      updateRecent(songs[0]);
+      updateRecent(normalizedSongs[0]);
     } catch (error) {
       console.error('Play all failed:', error);
       ToastAndroid.show('Failed to play songs', ToastAndroid.SHORT);
@@ -121,14 +160,15 @@ const PlaylistDetail = ({ route, navigation }) => {
         return;
       }
       const shuffledSongs = [...songs]
-        .map(song => ({ song, sortKey: Math.random() }))
+        .map(song => ({song, sortKey: Math.random()}))
         .sort((a, b) => a.sortKey - b.sortKey)
         .map(item => item.song);
-      const firstSong = shuffledSongs[0];
+      const normalizedSongs = normalizeTracks(shuffledSongs);
+      const firstSong = normalizedSongs[0];
 
       await TrackPlayer.stop();
       await TrackPlayer.reset();
-      await TrackPlayer.add(shuffledSongs);
+      await TrackPlayer.add(normalizedSongs);
       await TrackPlayer.skip(0);
       dispatch(selectedSong(firstSong));
       await storeSelectedSong(firstSong);
@@ -141,12 +181,12 @@ const PlaylistDetail = ({ route, navigation }) => {
     }
   };
 
-  const openBottomSheet = (item) => {
+  const openBottomSheet = item => {
     setOptionModalVisible(true);
     setSongItem(item);
   };
 
-  const addFavSongItem = async (favSong) => {
+  const addFavSongItem = async favSong => {
     setOptionModalVisible(false);
     try {
       if (!favSong || !favSong.url) {
@@ -158,7 +198,9 @@ const PlaylistDetail = ({ route, navigation }) => {
 
       if (existingSongs !== null) {
         favSongsArray = JSON.parse(existingSongs);
-        const existingIndex = favSongsArray.findIndex(item => item.url === favSong.url);
+        const existingIndex = favSongsArray.findIndex(
+          item => item.url === favSong.url,
+        );
         if (existingIndex !== -1) {
           ToastAndroid.show('Already added to favourites', ToastAndroid.SHORT);
         } else {
@@ -179,7 +221,7 @@ const PlaylistDetail = ({ route, navigation }) => {
     }
   };
 
-  const openMoodAssignment = async (item) => {
+  const openMoodAssignment = async item => {
     try {
       const assignments = await getSongMoodAssignments();
       setSelectedMoods(getAssignedMoodsForSong(assignments, item));
@@ -191,7 +233,7 @@ const PlaylistDetail = ({ route, navigation }) => {
     }
   };
 
-  const saveMoodAssignment = async (moodKeys) => {
+  const saveMoodAssignment = async moodKeys => {
     try {
       await setSongMoods(songItem, moodKeys);
       setSelectedMoods(moodKeys);
@@ -203,7 +245,7 @@ const PlaylistDetail = ({ route, navigation }) => {
     }
   };
 
-  const shareSong = async (song) => {
+  const shareSong = async song => {
     setOptionModalVisible(false);
     try {
       const filePath = song.url;
@@ -213,7 +255,7 @@ const PlaylistDetail = ({ route, navigation }) => {
       const options = {
         title: 'Share Audio',
         url: 'file://' + song.url,
-        type: mimeType
+        type: mimeType,
       };
       await Share.open(options);
     } catch (error) {
@@ -221,7 +263,7 @@ const PlaylistDetail = ({ route, navigation }) => {
     }
   };
 
-  const formatFileSize = (sizeInBytes) => {
+  const formatFileSize = sizeInBytes => {
     if (sizeInBytes < 1024) {
       return sizeInBytes + ' B';
     } else if (sizeInBytes < 1024 * 1024) {
@@ -233,7 +275,7 @@ const PlaylistDetail = ({ route, navigation }) => {
     }
   };
 
-  const getFileDateTime = async (url) => {
+  const getFileDateTime = async url => {
     try {
       const fileInfo = await RNFS.stat(url);
       const date = fileInfo.mtime;
@@ -244,25 +286,25 @@ const PlaylistDetail = ({ route, navigation }) => {
     }
   };
 
-  const openSongInfoModal = (song) => {
+  const openSongInfoModal = song => {
     setOptionModalVisible(false);
     setInfoModalVisible(true);
     setSongItem(song);
 
-    getFileSize(song.url).then((size) => {
+    getFileSize(song.url).then(size => {
       if (size !== null) {
         setSongSize(size);
       }
     });
 
-    getFileDateTime(song.url).then((dateTime) => {
+    getFileDateTime(song.url).then(dateTime => {
       if (dateTime !== null) {
         setSongDate(dateTime);
       }
     });
   };
 
-  const getFileSize = async (url) => {
+  const getFileSize = async url => {
     try {
       const fileInfo = await RNFS.stat(url);
       const size = fileInfo.size;
@@ -283,7 +325,8 @@ const PlaylistDetail = ({ route, navigation }) => {
       const filePath = songItem.url;
 
       try {
-        const permission = PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE;
+        const permission =
+          PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE;
         const hasPermission = await PermissionsAndroid.check(permission);
 
         if (!hasPermission) {
@@ -324,17 +367,17 @@ const PlaylistDetail = ({ route, navigation }) => {
     }
   };
 
-  const openPlaylistModalForSong = async (song) => {
+  const openPlaylistModalForSong = async song => {
     setSongForPlaylistAdd(song);
     await loadAvailablePlaylists();
     setPlaylistModalVisible(true);
   };
 
-  const togglePlaylistSelection = (playlistId) => {
+  const togglePlaylistSelection = playlistId => {
     setSelectedPlaylists(current =>
       current.includes(playlistId)
         ? current.filter(id => id !== playlistId)
-        : [...current, playlistId]
+        : [...current, playlistId],
     );
   };
 
@@ -357,7 +400,10 @@ const PlaylistDetail = ({ route, navigation }) => {
       playlists.push(newPlaylist);
       await AsyncStorage.setItem('userPlaylists', JSON.stringify(playlists));
 
-      ToastAndroid.show(`Playlist "${newPlaylistName}" created and song added!`, ToastAndroid.SHORT);
+      ToastAndroid.show(
+        `Playlist "${newPlaylistName}" created and song added!`,
+        ToastAndroid.SHORT,
+      );
       setNewPlaylistName('');
       setIsCreatingPlaylist(false);
       setPlaylistModalVisible(false);
@@ -370,17 +416,22 @@ const PlaylistDetail = ({ route, navigation }) => {
 
   const addSongToSelectedPlaylists = async () => {
     if (selectedPlaylists.length === 0) {
-      ToastAndroid.show('Please select at least one playlist', ToastAndroid.SHORT);
+      ToastAndroid.show(
+        'Please select at least one playlist',
+        ToastAndroid.SHORT,
+      );
       return;
     }
 
     try {
       const stored = await AsyncStorage.getItem('userPlaylists');
       const playlists = stored ? JSON.parse(stored) : [];
-      
+
       const updatedPlaylists = playlists.map(playlist => {
         if (selectedPlaylists.includes(playlist.id)) {
-          const alreadyExists = playlist.songs?.some(song => song.url === songForPlaylistAdd.url);
+          const alreadyExists = playlist.songs?.some(
+            song => song.url === songForPlaylistAdd.url,
+          );
           if (!alreadyExists) {
             return {
               ...playlist,
@@ -391,8 +442,16 @@ const PlaylistDetail = ({ route, navigation }) => {
         return playlist;
       });
 
-      await AsyncStorage.setItem('userPlaylists', JSON.stringify(updatedPlaylists));
-      ToastAndroid.show(`Song added to ${selectedPlaylists.length} playlist${selectedPlaylists.length !== 1 ? 's' : ''}!`, ToastAndroid.SHORT);
+      await AsyncStorage.setItem(
+        'userPlaylists',
+        JSON.stringify(updatedPlaylists),
+      );
+      ToastAndroid.show(
+        `Song added to ${selectedPlaylists.length} playlist${
+          selectedPlaylists.length !== 1 ? 's' : ''
+        }!`,
+        ToastAndroid.SHORT,
+      );
       setPlaylistModalVisible(false);
       setSelectedPlaylists([]);
       setNewPlaylistName('');
@@ -403,24 +462,53 @@ const PlaylistDetail = ({ route, navigation }) => {
     }
   };
 
-  const renderItem = ({ item, index }) => {
+  const renderItem = ({item, index}) => {
     const isSelected = selectedItem && selectedItem.url === item.url;
     return (
       <View style={styles.songItemWrap}>
-        <View style={[styles.songRow, { backgroundColor: palette.surface, borderColor: isSelected ? palette.accent : palette.border }]}>
+        <View
+          style={[
+            styles.songRow,
+            {
+              backgroundColor: palette.surface,
+              borderColor: isSelected ? palette.accent : palette.border,
+            },
+          ]}>
           <TouchableOpacity
-            style={{ flexDirection: 'row', gap: 12, alignItems: 'center', flex: 1 }}
+            style={{
+              flexDirection: 'row',
+              gap: 12,
+              alignItems: 'center',
+              flex: 1,
+            }}
             onPress={() => handleSongItem(item)}
-            onLongPress={() => openBottomSheet(item)}
-          >
-            <SongThumbnail song={item} width={56} height={42} radius={14} textSize={16} />
-            <View style={{ flex: 1, alignContent: 'center', justifyContent: 'center', minWidth: 0 }}>
-              <Text style={[styles.songName, { color: isSelected ? palette.accent : themeColor }]} numberOfLines={1} ellipsizeMode="tail">
+            onLongPress={() => openBottomSheet(item)}>
+            <SongThumbnail
+              song={item}
+              width={56}
+              height={42}
+              radius={14}
+              textSize={16}
+            />
+            <View
+              style={{
+                flex: 1,
+                alignContent: 'center',
+                justifyContent: 'center',
+                minWidth: 0,
+              }}>
+              <Text
+                style={[
+                  styles.songName,
+                  {color: isSelected ? palette.accent : themeColor},
+                ]}
+                numberOfLines={1}
+                ellipsizeMode="tail">
                 {item.title}
               </Text>
               {isSelected ? (
                 <TextTicker
-                  style={[styles.songInfoText, { color: dimColorTheme }]}
+                  style={[styles.songInfoText, {color: dimColorTheme}]}
                   duration={12000}
                   loop
                   bounce={false}
@@ -428,19 +516,31 @@ const PlaylistDetail = ({ route, navigation }) => {
                   marqueeDelay={1200}
                   scrollSpeed={20}
                   useNativeDriver
-                  numberOfLines={1}
-                >
-                  {`${item.artist || 'Unknown Artist'}  -  ${item.album || 'Unknown Album'}${item.genre ? '  -  ' + item.genre : ''}`}
+                  numberOfLines={1}>
+                  {`${item.artist || 'Unknown Artist'}  -  ${
+                    item.album || 'Unknown Album'
+                  }${item.genre ? '  -  ' + item.genre : ''}`}
                 </TextTicker>
               ) : (
-                <Text style={[styles.songInfoText, { color: dimColorTheme }]} numberOfLines={1} ellipsizeMode="tail">
-                  {`${item.artist || 'Unknown Artist'} - ${item.album || 'Unknown Album'}${item.genre ? ' - ' + item.genre : ''}`}
+                <Text
+                  style={[styles.songInfoText, {color: dimColorTheme}]}
+                  numberOfLines={1}
+                  ellipsizeMode="tail">
+                  {`${item.artist || 'Unknown Artist'} - ${
+                    item.album || 'Unknown Album'
+                  }${item.genre ? ' - ' + item.genre : ''}`}
                 </Text>
               )}
             </View>
           </TouchableOpacity>
-          <TouchableOpacity style={{ padding: 8, borderRadius: 25 }} onPress={() => openBottomSheet(item)}>
-            <FontAwesomeIcon icon={faEllipsisVertical} size={15} style={{ color: palette.subtext }} />
+          <TouchableOpacity
+            style={{padding: 8, borderRadius: 25}}
+            onPress={() => openBottomSheet(item)}>
+            <FontAwesomeIcon
+              icon={faEllipsisVertical}
+              size={15}
+              style={{color: palette.subtext}}
+            />
           </TouchableOpacity>
         </View>
       </View>
@@ -448,34 +548,63 @@ const PlaylistDetail = ({ route, navigation }) => {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1 }}>
-      <View style={[styles.container, { backgroundColor: palette.background }]}>
+    <SafeAreaView style={{flex: 1}}>
+      <View style={[styles.container, {backgroundColor: palette.background}]}>
         <View style={styles.headerWrap}>
           <View style={styles.topRow}>
-            <TouchableOpacity onPress={() => navigation.goBack()} style={[styles.backButton, { backgroundColor: palette.surfaceMuted }]}>
-              <FontAwesomeIcon icon={faArrowLeft} size={16} color={palette.text} />
+            <TouchableOpacity
+              onPress={() => navigation.goBack()}
+              style={[
+                styles.backButton,
+                {backgroundColor: palette.surfaceMuted},
+              ]}>
+              <FontAwesomeIcon
+                icon={faArrowLeft}
+                size={16}
+                color={palette.text}
+              />
             </TouchableOpacity>
-            <Text style={[styles.playlistTitle, { color: palette.text }]}>{playlist?.name || 'Playlist'}</Text>
+            <Text style={[styles.playlistTitle, {color: palette.text}]}>
+              {playlist?.name || 'Playlist'}
+            </Text>
           </View>
         </View>
 
         <View style={styles.actionWrap}>
           <View style={styles.actionRow}>
-            <TouchableOpacity style={[styles.playAllButton, { backgroundColor: palette.accent }]} onPress={playAllPlaylistSongs}>
-              <FontAwesomeIcon icon={faPlay} size={12} style={{ color: 'white' }} />
+            <TouchableOpacity
+              style={[styles.playAllButton, {backgroundColor: palette.accent}]}
+              onPress={playAllPlaylistSongs}>
+              <FontAwesomeIcon
+                icon={faPlay}
+                size={12}
+                style={{color: 'white'}}
+              />
               <Text style={styles.playAllText}>Play All</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={[styles.shuffleButton, { borderColor: palette.accent }]} onPress={shufflePlaylistSongs}>
-              <FontAwesomeIcon icon={faShuffle} size={14} style={{ color: palette.accent }} />
-              <Text style={[styles.shuffleButtonText, { color: palette.accent }]}>Shuffle</Text>
+            <TouchableOpacity
+              style={[styles.shuffleButton, {borderColor: palette.accent}]}
+              onPress={shufflePlaylistSongs}>
+              <FontAwesomeIcon
+                icon={faShuffle}
+                size={14}
+                style={{color: palette.accent}}
+              />
+              <Text style={[styles.shuffleButtonText, {color: palette.accent}]}>
+                Shuffle
+              </Text>
             </TouchableOpacity>
           </View>
         </View>
 
-        <View style={[styles.musicContainer, { backgroundColor: palette.background }]}>
+        <View
+          style={[
+            styles.musicContainer,
+            {backgroundColor: palette.background},
+          ]}>
           {songs.length === 0 ? (
             <View style={styles.emptyContainer}>
-              <Text style={[styles.emptyText, { color: palette.subtext }]}>
+              <Text style={[styles.emptyText, {color: palette.subtext}]}>
                 No songs in this playlist yet
               </Text>
             </View>
@@ -483,7 +612,9 @@ const PlaylistDetail = ({ route, navigation }) => {
             <FlatList
               data={songs}
               renderItem={renderItem}
-              keyExtractor={(item, index) => item.url || `${item.title}-${index}`}
+              keyExtractor={(item, index) =>
+                item.url || `${item.title}-${index}`
+              }
               contentContainerStyle={styles.listContent}
               showsVerticalScrollIndicator={false}
             />
@@ -498,64 +629,166 @@ const PlaylistDetail = ({ route, navigation }) => {
         visible={optionModalVisible}
         onRequestClose={() => {
           setOptionModalVisible(!optionModalVisible);
-        }}
-      >
+        }}>
         <Pressable
-          style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0, 0, 0, 0.1)' }}
-          onPress={() => setOptionModalVisible(false)}
-        >
+          style={{
+            flex: 1,
+            justifyContent: 'flex-end',
+            backgroundColor: 'rgba(0, 0, 0, 0.1)',
+          }}
+          onPress={() => setOptionModalVisible(false)}>
           <TouchableWithoutFeedback>
-            <View style={{
-              backgroundColor: isDarkMode ? '#212121' : 'white',
-              borderTopLeftRadius: 28,
-              borderTopRightRadius: 28,
-              padding: 20,
-              width: '100%',
-              shadowColor: '#000',
-              shadowOffset: {
-                width: 0,
-                height: 2,
-              },
-              shadowOpacity: 0.25,
-              shadowRadius: 4,
-              elevation: 5,
-            }}>
+            <View
+              style={{
+                backgroundColor: isDarkMode ? '#212121' : 'white',
+                borderTopLeftRadius: 28,
+                borderTopRightRadius: 28,
+                padding: 20,
+                width: '100%',
+                shadowColor: '#000',
+                shadowOffset: {
+                  width: 0,
+                  height: 2,
+                },
+                shadowOpacity: 0.25,
+                shadowRadius: 4,
+                elevation: 5,
+              }}>
               <View {...panResponder.panHandlers}>
-                <View style={{ backgroundColor: '#999', width: 40, borderRadius: 5, height: 5, alignSelf: 'center', marginBottom: 20 }}></View>
-                <View style={{ flexDirection: 'column', gap: 15 }}>
-                  <TouchableOpacity style={{ flexDirection: 'row', gap: 15, alignItems: 'center', padding: 10 }} onPress={() => handleSongItem(songItem)}>
-                    <FontAwesomeIcon icon={faPlay} size={16} style={{ color: dimColorTheme }} />
-                    <Text style={{ color: dimColorTheme, fontSize: 14 }}>Play this song</Text>
+                <View
+                  style={{
+                    backgroundColor: '#999',
+                    width: 40,
+                    borderRadius: 5,
+                    height: 5,
+                    alignSelf: 'center',
+                    marginBottom: 20,
+                  }}></View>
+                <View style={{flexDirection: 'column', gap: 15}}>
+                  <TouchableOpacity
+                    style={{
+                      flexDirection: 'row',
+                      gap: 15,
+                      alignItems: 'center',
+                      padding: 10,
+                    }}
+                    onPress={() => handleSongItem(songItem)}>
+                    <FontAwesomeIcon
+                      icon={faPlay}
+                      size={16}
+                      style={{color: dimColorTheme}}
+                    />
+                    <Text style={{color: dimColorTheme, fontSize: 14}}>
+                      Play this song
+                    </Text>
                   </TouchableOpacity>
 
-                  <TouchableOpacity style={{ flexDirection: 'row', gap: 15, alignItems: 'center', padding: 10 }} onPress={() => addFavSongItem(songItem)}>
-                    <FontAwesomeIcon icon={faHeart} size={16} style={{ color: dimColorTheme }} />
-                    <Text style={{ color: dimColorTheme, fontSize: 14 }}>Add to favourites</Text>
+                  <TouchableOpacity
+                    style={{
+                      flexDirection: 'row',
+                      gap: 15,
+                      alignItems: 'center',
+                      padding: 10,
+                    }}
+                    onPress={() => addFavSongItem(songItem)}>
+                    <FontAwesomeIcon
+                      icon={faHeart}
+                      size={16}
+                      style={{color: dimColorTheme}}
+                    />
+                    <Text style={{color: dimColorTheme, fontSize: 14}}>
+                      Add to favourites
+                    </Text>
                   </TouchableOpacity>
 
-                  <TouchableOpacity style={{ flexDirection: 'row', gap: 15, alignItems: 'center', padding: 10 }} onPress={() => openMoodAssignment(songItem)}>
-                    <FontAwesomeIcon icon={faMusic} size={16} style={{ color: dimColorTheme }} />
-                    <Text style={{ color: dimColorTheme, fontSize: 14 }}>Assign to mood</Text>
+                  <TouchableOpacity
+                    style={{
+                      flexDirection: 'row',
+                      gap: 15,
+                      alignItems: 'center',
+                      padding: 10,
+                    }}
+                    onPress={() => openMoodAssignment(songItem)}>
+                    <FontAwesomeIcon
+                      icon={faMusic}
+                      size={16}
+                      style={{color: dimColorTheme}}
+                    />
+                    <Text style={{color: dimColorTheme, fontSize: 14}}>
+                      Assign to mood
+                    </Text>
                   </TouchableOpacity>
 
-                  <TouchableOpacity style={{ flexDirection: 'row', gap: 15, alignItems: 'center', padding: 10 }} onPress={() => shareSong(songItem)}>
-                    <FontAwesomeIcon icon={faShareAlt} size={16} style={{ color: dimColorTheme }} />
-                    <Text style={{ color: dimColorTheme, fontSize: 14 }}>Share song file</Text>
+                  <TouchableOpacity
+                    style={{
+                      flexDirection: 'row',
+                      gap: 15,
+                      alignItems: 'center',
+                      padding: 10,
+                    }}
+                    onPress={() => shareSong(songItem)}>
+                    <FontAwesomeIcon
+                      icon={faShareAlt}
+                      size={16}
+                      style={{color: dimColorTheme}}
+                    />
+                    <Text style={{color: dimColorTheme, fontSize: 14}}>
+                      Share song file
+                    </Text>
                   </TouchableOpacity>
 
-                  <TouchableOpacity style={{ flexDirection: 'row', gap: 15, alignItems: 'center', padding: 10 }} onPress={() => openSongInfoModal(songItem)}>
-                    <FontAwesomeIcon icon={faInfoCircle} size={16} style={{ color: themeColor }} />
-                    <Text style={{ color: themeColor, fontSize: 14 }}>Song info</Text>
+                  <TouchableOpacity
+                    style={{
+                      flexDirection: 'row',
+                      gap: 15,
+                      alignItems: 'center',
+                      padding: 10,
+                    }}
+                    onPress={() => openSongInfoModal(songItem)}>
+                    <FontAwesomeIcon
+                      icon={faInfoCircle}
+                      size={16}
+                      style={{color: themeColor}}
+                    />
+                    <Text style={{color: themeColor, fontSize: 14}}>
+                      Song info
+                    </Text>
                   </TouchableOpacity>
 
-                  <TouchableOpacity style={{ flexDirection: 'row', gap: 15, alignItems: 'center', padding: 10 }} onPress={() => deleteSong(songItem)}>
-                    <FontAwesomeIcon icon={faTrashCan} size={16} style={{ color: themeColor }} />
-                    <Text style={{ color: themeColor, fontSize: 14 }}>Delete song</Text>
+                  <TouchableOpacity
+                    style={{
+                      flexDirection: 'row',
+                      gap: 15,
+                      alignItems: 'center',
+                      padding: 10,
+                    }}
+                    onPress={() => deleteSong(songItem)}>
+                    <FontAwesomeIcon
+                      icon={faTrashCan}
+                      size={16}
+                      style={{color: themeColor}}
+                    />
+                    <Text style={{color: themeColor, fontSize: 14}}>
+                      Delete song
+                    </Text>
                   </TouchableOpacity>
 
-                  <TouchableOpacity style={{ flexDirection: 'row', gap: 15, alignItems: 'center', padding: 10 }} onPress={() => setOptionModalVisible(false)}>
-                    <FontAwesomeIcon icon={faTimes} size={16} style={{ color: palette.accent }} />
-                    <Text style={{ color: palette.accent, fontSize: 14 }}>Close</Text>
+                  <TouchableOpacity
+                    style={{
+                      flexDirection: 'row',
+                      gap: 15,
+                      alignItems: 'center',
+                      padding: 10,
+                    }}
+                    onPress={() => setOptionModalVisible(false)}>
+                    <FontAwesomeIcon
+                      icon={faTimes}
+                      size={16}
+                      style={{color: palette.accent}}
+                    />
+                    <Text style={{color: palette.accent, fontSize: 14}}>
+                      Close
+                    </Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -580,67 +813,177 @@ const PlaylistDetail = ({ route, navigation }) => {
         visible={infoModalVisible}
         onRequestClose={() => {
           setInfoModalVisible(!infoModalVisible);
-        }}
-      >
+        }}>
         <Pressable
-          style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0, 0, 0, 0.1)' }}
-          onPress={() => setInfoModalVisible(false)}
-        >
+          style={{
+            flex: 1,
+            justifyContent: 'flex-end',
+            backgroundColor: 'rgba(0, 0, 0, 0.1)',
+          }}
+          onPress={() => setInfoModalVisible(false)}>
           <TouchableWithoutFeedback>
-            <View style={{
-              backgroundColor: isDarkMode ? '#212121' : 'white',
-              borderTopLeftRadius: 28,
-              borderTopRightRadius: 28,
-              padding: 20,
-              width: '100%',
-              shadowColor: '#000',
-              shadowOffset: {
-                width: 0,
-                height: 2,
-              },
-              shadowOpacity: 0.25,
-              shadowRadius: 4,
-              elevation: 5,
-            }}>
+            <View
+              style={{
+                backgroundColor: isDarkMode ? '#212121' : 'white',
+                borderTopLeftRadius: 28,
+                borderTopRightRadius: 28,
+                padding: 20,
+                width: '100%',
+                shadowColor: '#000',
+                shadowOffset: {
+                  width: 0,
+                  height: 2,
+                },
+                shadowOpacity: 0.25,
+                shadowRadius: 4,
+                elevation: 5,
+              }}>
               <View {...panResponder.panHandlers}>
-                <View style={{ backgroundColor: '#999', width: 40, borderRadius: 5, height: 5, alignSelf: 'center', marginBottom: 20 }}></View>
-                <Text style={{ color: palette.accent, fontSize: 18, fontWeight: 'bold', marginBottom: 15 }}>Song Details</Text>
+                <View
+                  style={{
+                    backgroundColor: '#999',
+                    width: 40,
+                    borderRadius: 5,
+                    height: 5,
+                    alignSelf: 'center',
+                    marginBottom: 20,
+                  }}></View>
+                <Text
+                  style={{
+                    color: palette.accent,
+                    fontSize: 18,
+                    fontWeight: 'bold',
+                    marginBottom: 15,
+                  }}>
+                  Song Details
+                </Text>
 
-                <View style={{ marginBottom: 15 }}>
-                  <Text style={{ color: palette.subtext, fontSize: 12, marginBottom: 4 }}>Title</Text>
-                  <Text style={{ color: themeColor, fontSize: 14, fontWeight: '500' }}>{songItem?.title}</Text>
+                <View style={{marginBottom: 15}}>
+                  <Text
+                    style={{
+                      color: palette.subtext,
+                      fontSize: 12,
+                      marginBottom: 4,
+                    }}>
+                    Title
+                  </Text>
+                  <Text
+                    style={{
+                      color: themeColor,
+                      fontSize: 14,
+                      fontWeight: '500',
+                    }}>
+                    {songItem?.title}
+                  </Text>
                 </View>
 
-                <View style={{ marginBottom: 15 }}>
-                  <Text style={{ color: palette.subtext, fontSize: 12, marginBottom: 4 }}>Artist</Text>
-                  <Text style={{ color: themeColor, fontSize: 14, fontWeight: '500' }}>{songItem?.artist || 'Unknown'}</Text>
+                <View style={{marginBottom: 15}}>
+                  <Text
+                    style={{
+                      color: palette.subtext,
+                      fontSize: 12,
+                      marginBottom: 4,
+                    }}>
+                    Artist
+                  </Text>
+                  <Text
+                    style={{
+                      color: themeColor,
+                      fontSize: 14,
+                      fontWeight: '500',
+                    }}>
+                    {songItem?.artist || 'Unknown'}
+                  </Text>
                 </View>
 
-                <View style={{ marginBottom: 15 }}>
-                  <Text style={{ color: palette.subtext, fontSize: 12, marginBottom: 4 }}>Album</Text>
-                  <Text style={{ color: themeColor, fontSize: 14, fontWeight: '500' }}>{songItem?.album || 'Unknown'}</Text>
+                <View style={{marginBottom: 15}}>
+                  <Text
+                    style={{
+                      color: palette.subtext,
+                      fontSize: 12,
+                      marginBottom: 4,
+                    }}>
+                    Album
+                  </Text>
+                  <Text
+                    style={{
+                      color: themeColor,
+                      fontSize: 14,
+                      fontWeight: '500',
+                    }}>
+                    {songItem?.album || 'Unknown'}
+                  </Text>
                 </View>
 
-                <View style={{ marginBottom: 15 }}>
-                  <Text style={{ color: palette.subtext, fontSize: 12, marginBottom: 4 }}>Duration</Text>
-                  <Text style={{ color: themeColor, fontSize: 14, fontWeight: '500' }}>{songItem?.duration || 'Unknown'}</Text>
+                <View style={{marginBottom: 15}}>
+                  <Text
+                    style={{
+                      color: palette.subtext,
+                      fontSize: 12,
+                      marginBottom: 4,
+                    }}>
+                    Duration
+                  </Text>
+                  <Text
+                    style={{
+                      color: themeColor,
+                      fontSize: 14,
+                      fontWeight: '500',
+                    }}>
+                    {songItem?.duration || 'Unknown'}
+                  </Text>
                 </View>
 
-                <View style={{ marginBottom: 15 }}>
-                  <Text style={{ color: palette.subtext, fontSize: 12, marginBottom: 4 }}>File Size</Text>
-                  <Text style={{ color: themeColor, fontSize: 14, fontWeight: '500' }}>{songSize}</Text>
+                <View style={{marginBottom: 15}}>
+                  <Text
+                    style={{
+                      color: palette.subtext,
+                      fontSize: 12,
+                      marginBottom: 4,
+                    }}>
+                    File Size
+                  </Text>
+                  <Text
+                    style={{
+                      color: themeColor,
+                      fontSize: 14,
+                      fontWeight: '500',
+                    }}>
+                    {songSize}
+                  </Text>
                 </View>
 
-                <View style={{ marginBottom: 20 }}>
-                  <Text style={{ color: palette.subtext, fontSize: 12, marginBottom: 4 }}>Date</Text>
-                  <Text style={{ color: themeColor, fontSize: 14, fontWeight: '500' }}>{songDate}</Text>
+                <View style={{marginBottom: 20}}>
+                  <Text
+                    style={{
+                      color: palette.subtext,
+                      fontSize: 12,
+                      marginBottom: 4,
+                    }}>
+                    Date
+                  </Text>
+                  <Text
+                    style={{
+                      color: themeColor,
+                      fontSize: 14,
+                      fontWeight: '500',
+                    }}>
+                    {songDate}
+                  </Text>
                 </View>
 
                 <TouchableOpacity
-                  style={{ padding: 12, backgroundColor: palette.accent, borderRadius: 12, alignItems: 'center' }}
-                  onPress={() => setInfoModalVisible(false)}
-                >
-                  <Text style={{ color: '#fff', fontSize: 14, fontWeight: 'bold' }}>Close</Text>
+                  style={{
+                    padding: 12,
+                    backgroundColor: palette.accent,
+                    borderRadius: 12,
+                    alignItems: 'center',
+                  }}
+                  onPress={() => setInfoModalVisible(false)}>
+                  <Text
+                    style={{color: '#fff', fontSize: 14, fontWeight: 'bold'}}>
+                    Close
+                  </Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -655,37 +998,68 @@ const PlaylistDetail = ({ route, navigation }) => {
         visible={deleteModalVisible}
         onRequestClose={() => {
           setDeleteModalVisible(!deleteModalVisible);
-        }}
-      >
+        }}>
         <Pressable
-          style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
-          onPress={() => setDeleteModalVisible(false)}
-        >
+          style={{
+            flex: 1,
+            justifyContent: 'flex-end',
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          }}
+          onPress={() => setDeleteModalVisible(false)}>
           <TouchableWithoutFeedback>
-            <View style={{
-              backgroundColor: isDarkMode ? '#212121' : 'white',
-              borderTopLeftRadius: 28,
-              borderTopRightRadius: 28,
-              padding: 20,
-              width: '100%',
-              shadowColor: '#000',
-              shadowOffset: {
-                width: 0,
-                height: 2,
-              },
-              shadowOpacity: 0.25,
-              shadowRadius: 4,
-              elevation: 5,
-            }}>
+            <View
+              style={{
+                backgroundColor: isDarkMode ? '#212121' : 'white',
+                borderTopLeftRadius: 28,
+                borderTopRightRadius: 28,
+                padding: 20,
+                width: '100%',
+                shadowColor: '#000',
+                shadowOffset: {
+                  width: 0,
+                  height: 2,
+                },
+                shadowOpacity: 0.25,
+                shadowRadius: 4,
+                elevation: 5,
+              }}>
               <View {...panResponder.panHandlers}>
-                <View style={{ backgroundColor: '#999', width: 40, borderRadius: 5, height: 5, alignSelf: 'center', marginBottom: 20 }}></View>
-                <View style={{ flexDirection: 'column', gap: 15 }}>
-                  <TouchableOpacity style={{ flexDirection: 'row', gap: 15, justifyContent: 'center', alignItems: 'center', padding: 15 }} onPress={deleteSongfromLocal}>
-                    <Text style={{ color: palette.accent, fontSize: 16 }}>Delete local file</Text>
+                <View
+                  style={{
+                    backgroundColor: '#999',
+                    width: 40,
+                    borderRadius: 5,
+                    height: 5,
+                    alignSelf: 'center',
+                    marginBottom: 20,
+                  }}></View>
+                <View style={{flexDirection: 'column', gap: 15}}>
+                  <TouchableOpacity
+                    style={{
+                      flexDirection: 'row',
+                      gap: 15,
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      padding: 15,
+                    }}
+                    onPress={deleteSongfromLocal}>
+                    <Text style={{color: palette.accent, fontSize: 16}}>
+                      Delete local file
+                    </Text>
                   </TouchableOpacity>
 
-                  <TouchableOpacity style={{ flexDirection: 'row', gap: 15, justifyContent: 'center', alignItems: 'center', padding: 15 }} onPress={() => setDeleteModalVisible(false)}>
-                    <Text style={{ color: themeColor, fontSize: 14 }}>Cancel</Text>
+                  <TouchableOpacity
+                    style={{
+                      flexDirection: 'row',
+                      gap: 15,
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      padding: 15,
+                    }}
+                    onPress={() => setDeleteModalVisible(false)}>
+                    <Text style={{color: themeColor, fontSize: 14}}>
+                      Cancel
+                    </Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -695,10 +1069,10 @@ const PlaylistDetail = ({ route, navigation }) => {
       </Modal>
     </SafeAreaView>
   );
-}
+};
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
+  container: {flex: 1},
   headerWrap: {
     paddingHorizontal: 16,
     paddingTop: 8,

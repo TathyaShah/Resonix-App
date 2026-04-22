@@ -1,8 +1,11 @@
-
-import React, { useEffect, createContext, useState } from 'react';
+import React, {useEffect, createContext, useState} from 'react';
 import SplashScreen from 'react-native-splash-screen';
-import { DefaultTheme, DarkTheme, NavigationContainer } from '@react-navigation/native';
-import { createStackNavigator, TransitionPresets } from '@react-navigation/stack';
+import {
+  DefaultTheme,
+  DarkTheme,
+  NavigationContainer,
+} from '@react-navigation/native';
+import {createStackNavigator, TransitionPresets} from '@react-navigation/stack';
 import TabNavigator from './src/components/tab';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
@@ -15,14 +18,22 @@ import {
 import TrackPlayer from 'react-native-track-player';
 import {setAllSongs} from './src/redux/action';
 import {getAll} from 'react-native-get-music-files';
-import {useDispatch} from 'react-redux'
+import {useDispatch} from 'react-redux';
 import AudioPlayer from './src/components/Player/AudioPlayer';
-import { PLAYLIST_MOOD_STORAGE_KEY, SONG_MOOD_STORAGE_KEY } from './src/utils/moods';
-import { ONLINE_LYRICS_STORAGE_KEY } from './src/utils/lyrics';
+import {
+  PLAYLIST_MOOD_STORAGE_KEY,
+  SONG_MOOD_STORAGE_KEY,
+} from './src/utils/moods';
+import {ONLINE_LYRICS_STORAGE_KEY} from './src/utils/lyrics';
 import BottomPlayer from './src/components/Player/BottomPlayer';
+import {
+  ensurePlayerInitialized,
+  normalizeTracks,
+} from './src/utils/trackPlayer';
 
 const Stack = createStackNavigator();
 export const AppContext = createContext();
+
 const App = () => {
   const systemColorScheme = useColorScheme();
   const [appTheme, setAppTheme] = useState('system');
@@ -30,7 +41,8 @@ const App = () => {
   const [useDefaultColorTheme, setUseDefaultColorTheme] = useState(true);
   const [onlineLyricsEnabled, setOnlineLyricsEnabled] = useState(false);
 
-  const isDarkMode = appTheme === 'system' ? systemColorScheme === 'dark' : appTheme === 'dark';
+  const isDarkMode =
+    appTheme === 'system' ? systemColorScheme === 'dark' : appTheme === 'dark';
   const themeBase = isDarkMode ? DarkTheme : DefaultTheme;
   const theme = {
     ...themeBase,
@@ -39,85 +51,79 @@ const App = () => {
       primary: useDefaultColorTheme
         ? '#E82255'
         : colorTheme === 'sunset'
-          ? '#F57C00'
-          : colorTheme === 'green'
-            ? '#2E7D32'
-            : colorTheme === 'blue'
-              ? '#1565C0'
-              : '#E53935',
+        ? '#F57C00'
+        : colorTheme === 'green'
+        ? '#2E7D32'
+        : colorTheme === 'blue'
+        ? '#1565C0'
+        : '#E53935',
     },
   };
   const effectiveTheme = isDarkMode ? 'dark' : 'light';
 
-  const dispatch = useDispatch()
+  const dispatch = useDispatch();
+
   useEffect(() => {
-    setTimeout(() => {
+    const timeoutId = setTimeout(() => {
       SplashScreen.hide();
     }, 500);
-  });
+
+    return () => clearTimeout(timeoutId);
+  }, []);
 
   useEffect(() => {
     const loadTheme = async () => {
       try {
-        const [storedTheme, storedColorTheme, storedUseDefaultColorTheme, storedOnlineLyricsPreference] = await Promise.all([
+        const [
+          storedTheme,
+          storedColorTheme,
+          storedUseDefaultColorTheme,
+          storedOnlineLyricsPreference,
+        ] = await Promise.all([
           AsyncStorage.getItem('appTheme'),
           AsyncStorage.getItem('colorTheme'),
           AsyncStorage.getItem('useDefaultColorTheme'),
           AsyncStorage.getItem(ONLINE_LYRICS_STORAGE_KEY),
         ]);
-        if (storedTheme) setAppTheme(storedTheme);
-        if (storedColorTheme) setColorTheme(storedColorTheme);
+
+        if (storedTheme) {
+          setAppTheme(storedTheme);
+        }
+        if (storedColorTheme) {
+          setColorTheme(storedColorTheme);
+        }
         if (storedUseDefaultColorTheme !== null) {
           setUseDefaultColorTheme(storedUseDefaultColorTheme === 'true');
         }
         if (storedOnlineLyricsPreference !== null) {
           setOnlineLyricsEnabled(storedOnlineLyricsPreference === 'true');
         }
-      } catch (e) {
-        console.error('Failed to load theme', e);
+      } catch (error) {
+        console.error('Failed to load theme', error);
       }
     };
+
     loadTheme();
   }, []);
 
   useEffect(() => {
     const initializePlayer = async () => {
       try {
-        // check state first—getState may throw if player not set up
-        await TrackPlayer.getState();
-      } catch (e) {
-        if (
-          !(
-            e &&
-            e.message &&
-            e.message.includes('already been initialized')
-          )
-        ) {
-          try {
-            await TrackPlayer.setupPlayer();
-          } catch (error) {
-            // ignore duplicate initialization error
-            if (
-              !(
-                error &&
-                error.message &&
-                error.message.includes('already been initialized')
-              )
-            ) {
-              console.error('Failed to initialize TrackPlayer', error);
-            }
-          }
-        }
+        await ensurePlayerInitialized();
+      } catch (error) {
+        console.error('Failed to initialize TrackPlayer', error);
       }
     };
 
     const initializeFavSongs = async () => {
       try {
-        const [existingSongs, existingSongMoods, existingPlaylistMoods] = await Promise.all([
-          AsyncStorage.getItem('favSongs'),
-          AsyncStorage.getItem(SONG_MOOD_STORAGE_KEY),
-          AsyncStorage.getItem(PLAYLIST_MOOD_STORAGE_KEY),
-        ]);
+        const [existingSongs, existingSongMoods, existingPlaylistMoods] =
+          await Promise.all([
+            AsyncStorage.getItem('favSongs'),
+            AsyncStorage.getItem(SONG_MOOD_STORAGE_KEY),
+            AsyncStorage.getItem(PLAYLIST_MOOD_STORAGE_KEY),
+          ]);
+
         if (!existingSongs) {
           await AsyncStorage.setItem('favSongs', JSON.stringify([]));
         }
@@ -125,12 +131,16 @@ const App = () => {
           await AsyncStorage.setItem(SONG_MOOD_STORAGE_KEY, JSON.stringify({}));
         }
         if (!existingPlaylistMoods) {
-          await AsyncStorage.setItem(PLAYLIST_MOOD_STORAGE_KEY, JSON.stringify({}));
+          await AsyncStorage.setItem(
+            PLAYLIST_MOOD_STORAGE_KEY,
+            JSON.stringify({}),
+          );
         }
-      } catch (e) {
-        console.error('Failed to initialize favSongs:', e);
+      } catch (error) {
+        console.error('Failed to initialize favSongs:', error);
       }
     };
+
     initializeFavSongs();
     initializePlayer();
 
@@ -139,30 +149,16 @@ const App = () => {
     };
   }, []);
 
-
   useEffect(() => {
     const requestPermissions = async () => {
       try {
-        const readPermission =
-          Platform.OS === 'android' && Platform.Version >= 33
-            ? PermissionsAndroid.PERMISSIONS.READ_MEDIA_AUDIO
-            : PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE;
-
-        const grantedStorage = await PermissionsAndroid.request(readPermission, {
-          title: 'Audio Permission',
-          message: 'Resonix needs access to your device audio files to build your library.',
-          buttonNeutral: 'Ask Me Later',
-          buttonNegative: 'Cancel',
-          buttonPositive: 'OK',
-        });
-
-        let grantedWriteStorage = PermissionsAndroid.RESULTS.GRANTED;
-        if (Platform.OS === 'android' && Platform.Version < 33) {
-          grantedWriteStorage = await PermissionsAndroid.request(
-            PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
+        if (Platform.OS === 'android' && Platform.Version >= 33) {
+          await PermissionsAndroid.request(
+            PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS,
             {
-              title: 'Storage Permission',
-              message: 'Resonix needs storage access to manage audio files on your device.',
+              title: 'Notification Permission',
+              message:
+                'Resonix uses notifications for lock screen and notification bar playback controls.',
               buttonNeutral: 'Ask Me Later',
               buttonNegative: 'Cancel',
               buttonPositive: 'OK',
@@ -170,39 +166,72 @@ const App = () => {
           );
         }
 
-        if (grantedStorage === PermissionsAndroid.RESULTS.GRANTED && grantedWriteStorage === PermissionsAndroid.RESULTS.GRANTED) {
+        const readPermission =
+          Platform.OS === 'android' && Platform.Version >= 33
+            ? PermissionsAndroid.PERMISSIONS.READ_MEDIA_AUDIO
+            : PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE;
+
+        const grantedStorage = await PermissionsAndroid.request(
+          readPermission,
+          {
+            title: 'Audio Permission',
+            message:
+              'Resonix needs access to your device audio files to build your library.',
+            buttonNeutral: 'Ask Me Later',
+            buttonNegative: 'Cancel',
+            buttonPositive: 'OK',
+          },
+        );
+
+        let grantedWriteStorage = PermissionsAndroid.RESULTS.GRANTED;
+        if (Platform.OS === 'android' && Platform.Version < 33) {
+          grantedWriteStorage = await PermissionsAndroid.request(
+            PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
+            {
+              title: 'Storage Permission',
+              message:
+                'Resonix needs storage access to manage audio files on your device.',
+              buttonNeutral: 'Ask Me Later',
+              buttonNegative: 'Cancel',
+              buttonPositive: 'OK',
+            },
+          );
+        }
+
+        if (
+          grantedStorage === PermissionsAndroid.RESULTS.GRANTED &&
+          grantedWriteStorage === PermissionsAndroid.RESULTS.GRANTED
+        ) {
           fetechAllSongs();
         } else {
           requestPermissions();
         }
-      } catch (err) {
-        console.warn(err);
+      } catch (error) {
+        console.warn(error);
       }
     };
+
     requestPermissions();
   }, []);
 
   const fetechAllSongs = async () => {
     await getAll({
-      // Use a large finite integer instead of Infinity to avoid native bridge errors
       limit: 200,
       coverQuality: 80,
     })
-      .then((filesOrError) => {
+      .then(filesOrError => {
         if (typeof filesOrError === 'string') {
           console.error(filesOrError);
           return;
         }
-        const reversedFiles = filesOrError.reverse();
+
+        const reversedFiles = normalizeTracks(filesOrError.reverse());
         dispatch(setAllSongs(reversedFiles));
       })
-      .catch((error) => {
+      .catch(error => {
         console.error(error);
       });
-
-  }
-
-
+  };
 
   return (
     <AppContext.Provider
@@ -218,15 +247,16 @@ const App = () => {
         setUseDefaultColorTheme,
         onlineLyricsEnabled,
         setOnlineLyricsEnabled,
-      }}
-    >
-      <View style={{ flex: 1, backgroundColor: isDarkMode ? '#000' : '#fff' }}>
-        <StatusBar translucent backgroundColor="transparent"
+      }}>
+      <View style={{flex: 1, backgroundColor: isDarkMode ? '#000' : '#fff'}}>
+        <StatusBar
+          translucent
+          backgroundColor="transparent"
           barStyle={isDarkMode ? 'light-content' : 'dark-content'}
         />
 
         <NavigationContainer theme={theme}>
-          <View style={{ flex: 1 }}>
+          <View style={{flex: 1}}>
             <Stack.Navigator>
               <Stack.Screen
                 name="Tabs"

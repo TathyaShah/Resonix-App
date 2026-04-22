@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {
   FlatList,
   StyleSheet,
@@ -7,15 +7,15 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { useFocusEffect } from '@react-navigation/native';
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
+import {useFocusEffect} from '@react-navigation/native';
+import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 import {
   faArrowLeft,
   faEllipsisVertical,
   faPlay,
   faShuffle,
 } from '@fortawesome/free-solid-svg-icons';
-import { useDispatch, useSelector } from 'react-redux';
+import {useDispatch, useSelector} from 'react-redux';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import TrackPlayer from 'react-native-track-player';
 import useResonixTheme from '../hooks/useResonixTheme';
@@ -28,15 +28,16 @@ import {
   getSongMoodAssignments,
   setSongMoods,
 } from '../utils/moods';
-import { selectedSong, setIsSongPlaying } from '../redux/action';
+import {selectedSong, setIsSongPlaying} from '../redux/action';
+import {normalizeTracks} from '../utils/trackPlayer';
 
 const shuffleList = songs =>
   [...songs]
-    .map(song => ({ song, sortKey: Math.random() }))
+    .map(song => ({song, sortKey: Math.random()}))
     .sort((a, b) => a.sortKey - b.sortKey)
     .map(item => item.song);
 
-const MoodSongs = ({ route, navigation }) => {
+const MoodSongs = ({route, navigation}) => {
   const moodKey = route?.params?.moodKey || 'happy';
   const autoPlay = Boolean(route?.params?.autoPlay);
   const allSongs = useSelector(state => state.allSongsReducer);
@@ -91,17 +92,24 @@ const MoodSongs = ({ route, navigation }) => {
   const playSongsQueue = useCallback(
     async (songsToPlay, startIndex = 0) => {
       if (!songsToPlay.length) {
-        ToastAndroid.show(`No ${moodMeta.label.toLowerCase()} songs assigned yet.`, ToastAndroid.SHORT);
+        ToastAndroid.show(
+          `No ${moodMeta.label.toLowerCase()} songs assigned yet.`,
+          ToastAndroid.SHORT,
+        );
         return;
       }
 
       try {
-        const safeStartIndex = Math.min(Math.max(startIndex, 0), songsToPlay.length - 1);
-        const firstSong = songsToPlay[safeStartIndex];
+        const safeStartIndex = Math.min(
+          Math.max(startIndex, 0),
+          songsToPlay.length - 1,
+        );
+        const normalizedSongs = normalizeTracks(songsToPlay);
+        const firstSong = normalizedSongs[safeStartIndex];
 
         await TrackPlayer.stop();
         await TrackPlayer.reset();
-        await TrackPlayer.add(songsToPlay);
+        await TrackPlayer.add(normalizedSongs);
         await TrackPlayer.skip(safeStartIndex);
         await TrackPlayer.play();
 
@@ -149,7 +157,7 @@ const MoodSongs = ({ route, navigation }) => {
     }
   };
 
-  const renderItem = ({ item }) => {
+  const renderItem = ({item}) => {
     const isSelected = selectedItem && selectedItem.url === item.url;
 
     return (
@@ -160,47 +168,80 @@ const MoodSongs = ({ route, navigation }) => {
             backgroundColor: palette.surface,
             borderColor: isSelected ? palette.accent : palette.border,
           },
-        ]}
-      >
+        ]}>
         <TouchableOpacity
-          onPress={() => playSongsQueue(moodSongs, moodSongs.findIndex(song => song.url === item.url))}
+          onPress={() =>
+            playSongsQueue(
+              moodSongs,
+              moodSongs.findIndex(song => song.url === item.url),
+            )
+          }
           style={styles.songRowLeft}
-          activeOpacity={0.88}
-        >
-          <SongThumbnail song={item} width={56} height={42} radius={14} textSize={16} />
+          activeOpacity={0.88}>
+          <SongThumbnail
+            song={item}
+            width={56}
+            height={42}
+            radius={14}
+            textSize={16}
+          />
           <View style={styles.songTextWrap}>
             <Text
-              style={[styles.songName, { color: isSelected ? palette.accent : palette.text }]}
-              numberOfLines={1}
-            >
+              style={[
+                styles.songName,
+                {color: isSelected ? palette.accent : palette.text},
+              ]}
+              numberOfLines={1}>
               {item.title}
             </Text>
-            <Text style={[styles.songInfo, { color: palette.subtext }]} numberOfLines={1}>
-              {`${item.artist || 'Unknown Artist'} - ${item.album || 'Unknown Album'}`}
+            <Text
+              style={[styles.songInfo, {color: palette.subtext}]}
+              numberOfLines={1}>
+              {`${item.artist || 'Unknown Artist'} - ${
+                item.album || 'Unknown Album'
+              }`}
             </Text>
           </View>
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => openMoodAssignment(item)} style={styles.actionButton}>
-          <FontAwesomeIcon icon={faEllipsisVertical} size={15} color={palette.subtext} />
+        <TouchableOpacity
+          onPress={() => openMoodAssignment(item)}
+          style={styles.actionButton}>
+          <FontAwesomeIcon
+            icon={faEllipsisVertical}
+            size={15}
+            color={palette.subtext}
+          />
         </TouchableOpacity>
       </View>
     );
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: palette.background }]}>
-      <View style={[styles.headerCard, { backgroundColor: palette.surface, borderColor: palette.border }]}>
+    <View style={[styles.container, {backgroundColor: palette.background}]}>
+      <View
+        style={[
+          styles.headerCard,
+          {backgroundColor: palette.surface, borderColor: palette.border},
+        ]}>
         <View style={styles.headerTop}>
           <TouchableOpacity
             onPress={() => navigation.goBack()}
-            style={[styles.backButton, { backgroundColor: palette.surfaceMuted }]}
-          >
-            <FontAwesomeIcon icon={faArrowLeft} size={16} color={palette.text} />
+            style={[
+              styles.backButton,
+              {backgroundColor: palette.surfaceMuted},
+            ]}>
+            <FontAwesomeIcon
+              icon={faArrowLeft}
+              size={16}
+              color={palette.text}
+            />
           </TouchableOpacity>
-          <View style={{ flex: 1 }}>
+          <View style={{flex: 1}}>
             <Text style={styles.emoji}>{moodMeta.emoji}</Text>
-            <Text style={[styles.title, { color: palette.text }]}>{moodMeta.label}</Text>
-            <Text style={[styles.subtitle, { color: palette.subtext }]}>
+            <Text style={[styles.title, {color: palette.text}]}>
+              {moodMeta.label}
+            </Text>
+            <Text style={[styles.subtitle, {color: palette.subtext}]}>
               {moodSongs.length} songs assigned to this mood.
             </Text>
           </View>
@@ -208,18 +249,21 @@ const MoodSongs = ({ route, navigation }) => {
 
         <View style={styles.buttonRow}>
           <TouchableOpacity
-            style={[styles.primaryButton, { backgroundColor: palette.accent }]}
-            onPress={() => playSongsQueue(moodSongs, 0)}
-          >
+            style={[styles.primaryButton, {backgroundColor: palette.accent}]}
+            onPress={() => playSongsQueue(moodSongs, 0)}>
             <FontAwesomeIcon icon={faPlay} size={12} color="#fff" />
             <Text style={styles.primaryButtonText}>Play</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={[styles.secondaryButton, { backgroundColor: palette.surfaceMuted }]}
-            onPress={() => playSongsQueue(shuffleList(moodSongs), 0)}
-          >
+            style={[
+              styles.secondaryButton,
+              {backgroundColor: palette.surfaceMuted},
+            ]}
+            onPress={() => playSongsQueue(shuffleList(moodSongs), 0)}>
             <FontAwesomeIcon icon={faShuffle} size={12} color={palette.text} />
-            <Text style={[styles.secondaryButtonText, { color: palette.text }]}>Shuffle</Text>
+            <Text style={[styles.secondaryButtonText, {color: palette.text}]}>
+              Shuffle
+            </Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -231,11 +275,18 @@ const MoodSongs = ({ route, navigation }) => {
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={
-          <View style={[styles.emptyCard, { backgroundColor: palette.surface, borderColor: palette.border }]}>
+          <View
+            style={[
+              styles.emptyCard,
+              {backgroundColor: palette.surface, borderColor: palette.border},
+            ]}>
             <Text style={styles.emptyEmoji}>{moodMeta.emoji}</Text>
-            <Text style={[styles.emptyTitle, { color: palette.text }]}>No songs assigned yet</Text>
-            <Text style={[styles.emptySubtitle, { color: palette.subtext }]}>
-              Use the 3-dot menu on songs and assign them to {moodMeta.label.toLowerCase()}.
+            <Text style={[styles.emptyTitle, {color: palette.text}]}>
+              No songs assigned yet
+            </Text>
+            <Text style={[styles.emptySubtitle, {color: palette.subtext}]}>
+              Use the 3-dot menu on songs and assign them to{' '}
+              {moodMeta.label.toLowerCase()}.
             </Text>
           </View>
         }

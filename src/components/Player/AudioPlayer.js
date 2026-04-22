@@ -46,6 +46,10 @@ import {useNavigation} from '@react-navigation/native';
 import SongThumbnail from '../SongThumbnail';
 import {AppContext} from '../../../App';
 import {fetchLyricsForSong} from '../../utils/lyrics';
+import {
+  ensurePlayerInitialized as ensureTrackPlayerInitialized,
+  getPlaybackProgress,
+} from '../../utils/trackPlayer';
 
 const {height: SCREEN_HEIGHT} = Dimensions.get('window');
 const LYRICS_SHEET_MAX_HEIGHT = Math.round(SCREEN_HEIGHT * 0.64);
@@ -65,7 +69,6 @@ const AudioPlayer = () => {
   const isSongPlaying = useSelector(state => state.isSongPlaying);
   const [position, setPosition] = useState(0);
   const [duration, setDuration] = useState(0);
-  const [playerInitialized, setPlayerInitialized] = useState(false);
   const [isFavSong, setFavSong] = useState(false);
   const [lyricsState, setLyricsState] = useState('idle');
   const [lyricsData, setLyricsData] = useState(EMPTY_LYRICS);
@@ -92,31 +95,10 @@ const AudioPlayer = () => {
   const dimColorTheme = isDarkMode ? Colors.light : Colors.darker;
 
   const ensurePlayerInitialized = async () => {
-    if (playerInitialized) {
-      return;
-    }
     try {
-      await TrackPlayer.getState();
-      setPlayerInitialized(true);
-    } catch (e) {
-      if (e && e.message && e.message.includes('already been initialized')) {
-        setPlayerInitialized(true);
-        return;
-      }
-      try {
-        await TrackPlayer.setupPlayer();
-        setPlayerInitialized(true);
-      } catch (setupErr) {
-        if (
-          setupErr &&
-          setupErr.message &&
-          setupErr.message.includes('already been initialized')
-        ) {
-          setPlayerInitialized(true);
-        } else {
-          console.error('Error setting up TrackPlayer:', setupErr);
-        }
-      }
+      await ensureTrackPlayerInitialized();
+    } catch (error) {
+      console.error('Error setting up TrackPlayer:', error);
     }
   };
 
@@ -128,13 +110,11 @@ const AudioPlayer = () => {
   useEffect(() => {
     const updatePosition = async () => {
       try {
-        await ensurePlayerInitialized();
-        const pos = await TrackPlayer.getPosition();
-        const dur = await TrackPlayer.getDuration();
-        setPosition(pos);
-        setDuration(dur);
-      } catch (err) {
-        // ignore initialization errors here
+        const progress = await getPlaybackProgress();
+        setPosition(progress.position);
+        setDuration(progress.duration);
+      } catch (error) {
+        console.error('Error getting track progress:', error);
       }
     };
 
@@ -205,7 +185,7 @@ const AudioPlayer = () => {
         ToastAndroid.show('No songs in queue', ToastAndroid.SHORT);
         return;
       }
-      
+
       const randomIndex = Math.floor(Math.random() * queue.length);
       await TrackPlayer.skip(randomIndex);
       await TrackPlayer.play();
@@ -234,11 +214,11 @@ const AudioPlayer = () => {
     setPlaylistModalVisible(true);
   };
 
-  const togglePlaylistSelection = (playlistId) => {
+  const togglePlaylistSelection = playlistId => {
     setSelectedPlaylists(current =>
       current.includes(playlistId)
         ? current.filter(id => id !== playlistId)
-        : [...current, playlistId]
+        : [...current, playlistId],
     );
   };
 
@@ -261,7 +241,10 @@ const AudioPlayer = () => {
       playlists.push(newPlaylist);
       await AsyncStorage.setItem('userPlaylists', JSON.stringify(playlists));
 
-      ToastAndroid.show(`Playlist "${newPlaylistName}" created and song added!`, ToastAndroid.SHORT);
+      ToastAndroid.show(
+        `Playlist "${newPlaylistName}" created and song added!`,
+        ToastAndroid.SHORT,
+      );
       setNewPlaylistName('');
       setIsCreatingPlaylist(false);
       await loadAvailablePlaylists();
@@ -273,17 +256,22 @@ const AudioPlayer = () => {
 
   const addSongToSelectedPlaylists = async () => {
     if (selectedPlaylists.length === 0) {
-      ToastAndroid.show('Please select at least one playlist', ToastAndroid.SHORT);
+      ToastAndroid.show(
+        'Please select at least one playlist',
+        ToastAndroid.SHORT,
+      );
       return;
     }
 
     try {
       const stored = await AsyncStorage.getItem('userPlaylists');
       const playlists = stored ? JSON.parse(stored) : [];
-      
+
       const updatedPlaylists = playlists.map(playlist => {
         if (selectedPlaylists.includes(playlist.id)) {
-          const alreadyExists = playlist.songs?.some(song => song.url === selected.url);
+          const alreadyExists = playlist.songs?.some(
+            song => song.url === selected.url,
+          );
           if (!alreadyExists) {
             return {
               ...playlist,
@@ -294,8 +282,14 @@ const AudioPlayer = () => {
         return playlist;
       });
 
-      await AsyncStorage.setItem('userPlaylists', JSON.stringify(updatedPlaylists));
-      ToastAndroid.show('Song added to selected playlists!', ToastAndroid.SHORT);
+      await AsyncStorage.setItem(
+        'userPlaylists',
+        JSON.stringify(updatedPlaylists),
+      );
+      ToastAndroid.show(
+        'Song added to selected playlists!',
+        ToastAndroid.SHORT,
+      );
       setPlaylistModalVisible(false);
       setSelectedPlaylists([]);
     } catch (error) {
@@ -695,10 +689,7 @@ const AudioPlayer = () => {
           </View>
 
           <Animated.View
-            style={[
-              styles.musicIconContainer,
-              {shadowColor: palette.shadow},
-            ]}>
+            style={[styles.musicIconContainer, {shadowColor: palette.shadow}]}>
             <SongThumbnail
               song={selected}
               size={250}
@@ -904,8 +895,7 @@ const AudioPlayer = () => {
                 ]}
                 onPress={() => {}}>
                 <View style={styles.modalHeader}>
-                  <Text
-                    style={[styles.modalTitle, {color: palette.text}]}>
+                  <Text style={[styles.modalTitle, {color: palette.text}]}>
                     Add to Playlist
                   </Text>
                   <TouchableOpacity
@@ -932,20 +922,28 @@ const AudioPlayer = () => {
                       onPress={() => setIsCreatingPlaylist(true)}
                       style={[
                         styles.createPlaylistButton,
-                        {backgroundColor: palette.accentSoft, borderColor: palette.accent},
+                        {
+                          backgroundColor: palette.accentSoft,
+                          borderColor: palette.accent,
+                        },
                       ]}>
                       <FontAwesomeIcon
                         icon={faPlus}
                         size={16}
                         color={palette.accent}
                       />
-                      <Text style={[styles.createPlaylistText, {color: palette.accent}]}>
+                      <Text
+                        style={[
+                          styles.createPlaylistText,
+                          {color: palette.accent},
+                        ]}>
                         Create New Playlist
                       </Text>
                     </TouchableOpacity>
 
                     {availablePlaylists.length === 0 ? (
-                      <Text style={[styles.emptyText, {color: palette.subtext}]}>
+                      <Text
+                        style={[styles.emptyText, {color: palette.subtext}]}>
                         No playlists available. Create one to add this song!
                       </Text>
                     ) : (
@@ -1038,7 +1036,8 @@ const AudioPlayer = () => {
                           styles.cancelButton,
                           {backgroundColor: palette.surfaceMuted},
                         ]}>
-                        <Text style={[styles.buttonText, {color: palette.text}]}>
+                        <Text
+                          style={[styles.buttonText, {color: palette.text}]}>
                           Cancel
                         </Text>
                       </TouchableOpacity>
@@ -1064,7 +1063,8 @@ const AudioPlayer = () => {
                       {backgroundColor: palette.accent},
                     ]}>
                     <Text style={styles.addButtonText}>
-                      Add to {selectedPlaylists.length} Playlist{selectedPlaylists.length !== 1 ? 's' : ''}
+                      Add to {selectedPlaylists.length} Playlist
+                      {selectedPlaylists.length !== 1 ? 's' : ''}
                     </Text>
                   </TouchableOpacity>
                 )}
