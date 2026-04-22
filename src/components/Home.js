@@ -24,10 +24,10 @@ import {
 import {getTrackIndexByUrl} from '../utils/trackPlayer';
 
 const MOOD_ACCENT_COLORS = {
-  happy: '#F2B84B',
-  sad: '#6E94D6',
-  energetic: '#F08A4B',
-  love: '#D96A86',
+  happy: '#2E7D32',
+  sad: '#E53935',
+  energetic: '#F57C00',
+  love: '#1565C0',
 };
 
 const Home = () => {
