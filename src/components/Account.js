@@ -14,6 +14,7 @@ import {
   View,
   FlatList,
 } from 'react-native';
+import { SvgUri } from 'react-native-svg';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import LinearGradient from 'react-native-linear-gradient';
@@ -54,26 +55,40 @@ const COLOR_THEME_OPTIONS = [
   { key: 'blue', label: 'Blue', color: '#1565C0' },
 ];
 
-const AVATARS = [
-  { id: 0, character: '🧁', label: 'Cupcake', bgColor: '#F4A460' },
-  { id: 1, character: '🐕', label: 'Dog', bgColor: '#DAA520' },
-  { id: 2, character: '🤖', label: 'Robot', bgColor: '#4DD0E1' },
-  { id: 3, character: '🍔', label: 'Burger', bgColor: '#EF5350' },
-  { id: 4, character: '🥷', label: 'Ninja', bgColor: '#C2185B' },
-  { id: 5, character: '🧢', label: 'Baseball', bgColor: '#1E88E5' },
-  { id: 6, character: '🐓', label: 'Rooster', bgColor: '#F57C00' },
-  { id: 7, character: '⚓', label: 'Anchor', bgColor: '#00BCD4' },
-  { id: 8, character: '👑', label: 'Queen', bgColor: '#F0F0F0' },
-  { id: 9, character: '🐦', label: 'Phoenix', bgColor: '#FF6F00' },
-  { id: 10, character: '🐻', label: 'Bear', bgColor: '#8B6F47' },
-  { id: 11, character: '🍯', label: 'Treasure', bgColor: '#8B4513' },
-  { id: 12, character: '👾', label: 'Alien', bgColor: '#00A86B' },
-  { id: 13, character: '👻', label: 'Ghost', bgColor: '#B19CD9' },
-  { id: 14, character: '🐝', label: 'Bee', bgColor: '#FFD700' },
-  { id: 15, character: '🌻', label: 'Sunflower', bgColor: '#87CEEB' },
-  { id: 16, character: '🤖', label: 'Droid', bgColor: '#1A237E' },
-  { id: 17, character: '🎭', label: 'Mask', bgColor: '#E91E63' },
+const DICEBEAR_THUMBS_URL = 'https://api.dicebear.com/9.x/thumbs/svg';
+const AVATAR_SEEDS = [
+  // 'Resonix Amp',
+  // 'Resonix Bass',
+  // 'Resonix Beat',
+  'Resonix Echo',
+  // 'Resonix Flow',
+  'Resonix Groove',
+  'Resonix Harmony',
+  'Resonix Hook',
+  'Resonix Loop',
+  // 'Resonix Lyric',
+  'Resonix Melody',
+  'Resonix Mix',
+  'Resonix Pulse',
+  // 'Resonix Rhythm',
+  'Resonix Solo',
+  'Resonix Tempo',
+  'Resonix Vibe',
+  'Resonix Wave',
 ];
+
+const getDiceBearAvatarUri = (seed, size = 128) =>
+  `${DICEBEAR_THUMBS_URL}?seed=${encodeURIComponent(seed)}&size=${size}&backgroundType=solid`;
+
+const DICEBEAR_AVATARS = AVATAR_SEEDS.map((seed, id) => ({
+  id,
+  seed,
+  label: seed.replace('Resonix ', ''),
+  uri: getDiceBearAvatarUri(seed),
+}));
+
+const getAvatarById = avatarId =>
+  DICEBEAR_AVATARS.find(avatar => avatar.id === avatarId) || null;
 
 const Account = () => {
   const navigation = useNavigation();
@@ -136,7 +151,8 @@ const Account = () => {
       }
 
       if (storedAvatarId !== null) {
-        setSelectedAvatarId(parseInt(storedAvatarId, 10));
+        const parsedAvatarId = parseInt(storedAvatarId, 10);
+        setSelectedAvatarId(getAvatarById(parsedAvatarId) ? parsedAvatarId : null);
       } else {
         setSelectedAvatarId(null);
       }
@@ -372,6 +388,7 @@ const Account = () => {
     .slice(0, 2)
     .map(part => part.charAt(0).toUpperCase())
     .join('') || 'R';
+  const selectedAvatar = getAvatarById(selectedAvatarId);
 
   const overviewCards = [
     {
@@ -459,13 +476,17 @@ const Account = () => {
             activeOpacity={0.8}
           >
             <LinearGradient
-              colors={selectedAvatarId !== null ? [AVATARS[selectedAvatarId].bgColor, AVATARS[selectedAvatarId].bgColor] : [palette.secondary, palette.accent]}
+              colors={selectedAvatar ? [palette.surfaceMuted, palette.surfaceMuted] : [palette.secondary, palette.accent]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={styles.avatar}
             >
-              {selectedAvatarId !== null ? (
-                <Text style={styles.avatarCharacter}>{AVATARS[selectedAvatarId].character}</Text>
+              {selectedAvatar ? (
+                <SvgUri
+                  uri={selectedAvatar.uri}
+                  width={80}
+                  height={80}
+                />
               ) : (
                 <Text style={styles.avatarText}>{initials}</Text>
               )}
@@ -968,7 +989,7 @@ const Account = () => {
             </View>
 
             <FlatList
-              data={AVATARS}
+              data={DICEBEAR_AVATARS}
               keyExtractor={item => item.id.toString()}
               numColumns={4}
               scrollEnabled={true}
@@ -979,12 +1000,16 @@ const Account = () => {
                   style={[
                     styles.avatarOption,
                     {
-                      backgroundColor: item.bgColor,
+                      backgroundColor: palette.surfaceMuted,
                       borderColor: previewAvatarId === item.id ? palette.accent : 'transparent',
                     },
                   ]}
                 >
-                  <Text style={styles.avatarOptionCharacter}>{item.character}</Text>
+                  <SvgUri
+                    uri={item.uri}
+                    width={58}
+                    height={58}
+                  />
                   {previewAvatarId === item.id && (
                     <View style={[styles.avatarCheckmark, { backgroundColor: palette.accent }]}>
                       <Text style={styles.checkmarkText}>✓</Text>
@@ -1039,14 +1064,12 @@ const styles = StyleSheet.create({
     borderRadius: 40,
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
   },
   avatarText: {
     color: '#FFFFFF',
     fontSize: 28,
     fontWeight: '700',
-  },
-  avatarCharacter: {
-    fontSize: 40,
   },
   heroTextWrap: {
     flex: 1,
@@ -1296,9 +1319,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     margin: 8,
     position: 'relative',
-  },
-  avatarOptionCharacter: {
-    fontSize: 44,
+    overflow: 'hidden',
   },
   avatarCheckmark: {
     position: 'absolute',
