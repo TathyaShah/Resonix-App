@@ -41,6 +41,10 @@ import { AppContext } from '../../App';
 import { setFavouritesSongs } from '../redux/action';
 import useResonixTheme from '../hooks/useResonixTheme';
 import { ONLINE_LYRICS_STORAGE_KEY } from '../utils/lyrics';
+import {
+  AUTO_MOOD_CATEGORIZATION_STORAGE_KEY,
+  autoCategorizeSongMoods,
+} from '../utils/moodCategorizer';
 
 const THEME_OPTIONS = [
   { key: 'light', label: 'Light' },
@@ -110,6 +114,9 @@ const Account = () => {
   const [recentCount, setRecentCount] = useState(0);
   const [favCount, setFavCount] = useState(0);
   const [autoScan, setAutoScan] = useState(true);
+  const [autoMoodCategorization, setAutoMoodCategorization] = useState(false);
+  const [isAutoCategorizingMoods, setIsAutoCategorizingMoods] = useState(false);
+  const [autoMoodProgress, setAutoMoodProgress] = useState(null);
   const [isRefreshingLibrary, setIsRefreshingLibrary] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
   const [selectedAvatarId, setSelectedAvatarId] = useState(null);
@@ -126,13 +133,21 @@ const Account = () => {
 
   const loadAccountState = useCallback(async () => {
     try {
-      const [storedName, storedRecentSongs, storedFavSongs, storedAutoScan, storedAvatarId] =
+      const [
+        storedName,
+        storedRecentSongs,
+        storedFavSongs,
+        storedAutoScan,
+        storedAvatarId,
+        storedAutoMoodCategorization,
+      ] =
         await Promise.all([
           AsyncStorage.getItem('profileName'),
           AsyncStorage.getItem('recentSongs'),
           AsyncStorage.getItem('favSongs'),
           AsyncStorage.getItem('libraryAutoScan'),
           AsyncStorage.getItem('selectedAvatarId'),
+          AsyncStorage.getItem(AUTO_MOOD_CATEGORIZATION_STORAGE_KEY),
         ]);
 
       setName(storedName || '');
@@ -149,6 +164,7 @@ const Account = () => {
       if (storedAutoScan !== null) {
         setAutoScan(storedAutoScan === 'true');
       }
+      setAutoMoodCategorization(storedAutoMoodCategorization === 'true');
 
       if (storedAvatarId !== null) {
         const parsedAvatarId = parseInt(storedAvatarId, 10);
@@ -217,6 +233,52 @@ const Account = () => {
       }
     },
     [notify, setOnlineLyricsEnabled],
+  );
+
+  const handleAutoMoodCategorizationToggle = useCallback(
+    async value => {
+      try {
+        setAutoMoodCategorization(value);
+        await AsyncStorage.setItem(
+          AUTO_MOOD_CATEGORIZATION_STORAGE_KEY,
+          String(value),
+        );
+
+        if (!value) {
+          setAutoMoodProgress(null);
+          notify('Auto mood categorization disabled.');
+          return;
+        }
+
+        if (!allSongs.length) {
+          notify('No songs found to categorize yet.');
+          return;
+        }
+
+        setIsAutoCategorizingMoods(true);
+        setAutoMoodProgress({ current: 0, total: allSongs.length });
+        notify('Auto-categorizing moods from online song metadata.');
+
+        const result = await autoCategorizeSongMoods(allSongs, {
+          onProgress: progress => setAutoMoodProgress(progress),
+        });
+
+        notify(
+          `Mood categorization finished: ${result.categorizedCount} songs updated.`,
+        );
+      } catch (error) {
+        console.error('Failed to auto-categorize moods', error);
+        setAutoMoodCategorization(false);
+        await AsyncStorage.setItem(
+          AUTO_MOOD_CATEGORIZATION_STORAGE_KEY,
+          'false',
+        );
+        notify('Unable to auto-categorize moods right now.');
+      } finally {
+        setIsAutoCategorizingMoods(false);
+      }
+    },
+    [allSongs, notify],
   );
 
   const refreshLibrary = useCallback(async () => {
@@ -297,11 +359,14 @@ const Account = () => {
                   'colorTheme',
                   'useDefaultColorTheme',
                   'selectedAvatarId',
+                  AUTO_MOOD_CATEGORIZATION_STORAGE_KEY,
                   ONLINE_LYRICS_STORAGE_KEY,
                 ]);
               setName('');
               setIsEditingName(true);
               setAutoScan(true);
+              setAutoMoodCategorization(false);
+              setAutoMoodProgress(null);
               setSelectedAvatarId(null);
               setOnlineLyricsEnabled?.(false);
                 if (setAppTheme) {
@@ -796,6 +861,31 @@ const Account = () => {
               Tune how the app behaves around your local music library.
             </Text>
           </View>
+        </View>
+
+        <View
+          style={[
+            styles.preferenceRow,
+            { backgroundColor: palette.cardMuted, borderColor: palette.border, marginTop: 12 },
+          ]}
+        >
+          <View style={styles.preferenceTextWrap}>
+            <Text style={[styles.listRowTitle, { color: palette.text }]}>
+              Allow auto-categorization of moods
+            </Text>
+            <Text style={[styles.listRowSubtitle, { color: palette.subtext }]}>
+              {isAutoCategorizingMoods && autoMoodProgress
+                ? `Checking ${autoMoodProgress.current}/${autoMoodProgress.total} songs online.`
+                : 'Use online song metadata to place library songs into mood cards.'}
+            </Text>
+          </View>
+          <Switch
+            value={autoMoodCategorization}
+            onValueChange={handleAutoMoodCategorizationToggle}
+            disabled={isAutoCategorizingMoods}
+            trackColor={{ false: '#8E97A8', true: palette.accentSoft }}
+            thumbColor={autoMoodCategorization ? palette.accent : '#F7F8FB'}
+          />
         </View>
 
         <View

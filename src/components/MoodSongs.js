@@ -218,53 +218,48 @@ const MoodSongs = ({route, navigation}) => {
 
   return (
     <View style={[styles.container, {backgroundColor: palette.background}]}>
-      <View
-        style={[
-          styles.headerCard,
-          {backgroundColor: palette.surface, borderColor: palette.border},
-        ]}>
+      <View style={styles.header}>
         <View style={styles.headerTop}>
-          <TouchableOpacity
-            onPress={() => navigation.goBack()}
-            style={[
-              styles.backButton,
-              {backgroundColor: palette.surfaceMuted},
-            ]}>
-            <FontAwesomeIcon
-              icon={faArrowLeft}
-              size={16}
-              color={palette.text}
-            />
-          </TouchableOpacity>
-          <View style={{flex: 1}}>
-            <Text style={styles.emoji}>{moodMeta.emoji}</Text>
-            <Text style={[styles.title, {color: palette.text}]}>
+          <View style={styles.headerTitleWrap}>
+            <TouchableOpacity
+              onPress={() => navigation.goBack()}
+              style={[
+                styles.backButton,
+                {backgroundColor: palette.surfaceMuted},
+              ]}>
+              <FontAwesomeIcon
+                icon={faArrowLeft}
+                size={16}
+                color={palette.text}
+              />
+            </TouchableOpacity>
+            <Text style={[styles.title, {color: palette.text}]} numberOfLines={1}>
               {moodMeta.label}
             </Text>
-            <Text style={[styles.subtitle, {color: palette.subtext}]}>
-              {moodSongs.length} songs assigned to this mood.
-            </Text>
           </View>
-        </View>
 
-        <View style={styles.buttonRow}>
-          <TouchableOpacity
-            style={[styles.primaryButton, {backgroundColor: palette.accent}]}
-            onPress={() => playSongsQueue(moodSongs, 0)}>
-            <FontAwesomeIcon icon={faPlay} size={12} color="#fff" />
-            <Text style={styles.primaryButtonText}>Play</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[
-              styles.secondaryButton,
-              {backgroundColor: palette.surfaceMuted},
-            ]}
-            onPress={() => playSongsQueue(shuffleList(moodSongs), 0)}>
-            <FontAwesomeIcon icon={faShuffle} size={12} color={palette.text} />
-            <Text style={[styles.secondaryButtonText, {color: palette.text}]}>
-              Shuffle
-            </Text>
-          </TouchableOpacity>
+          <View style={styles.buttonRow}>
+            <TouchableOpacity
+              style={styles.playAllButton}
+              onPress={() => playSongsQueue(moodSongs, 0)}>
+              <View
+                style={[
+                  styles.playAllIconWrap,
+                  {backgroundColor: palette.accent},
+                ]}>
+                <FontAwesomeIcon icon={faPlay} size={10} color="#fff" />
+              </View>
+              <Text style={[styles.playAllText, {color: palette.text}]}>Play</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.shuffleButton}
+              onPress={() => playSongsQueue(shuffleList(moodSongs), 0)}>
+              <FontAwesomeIcon icon={faShuffle} size={14} color={palette.accent} />
+              <Text style={[styles.shuffleButtonText, {color: palette.text}]}>
+                Shuffle
+              </Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
 
@@ -310,17 +305,22 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  headerCard: {
-    borderWidth: 1,
-    borderRadius: 24,
-    padding: 20,
+  header: {
     marginHorizontal: 16,
     marginTop: 16,
     marginBottom: 14,
   },
   headerTop: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  headerTitleWrap: {
+    flex: 1,
+    minWidth: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   backButton: {
     width: 42,
@@ -330,49 +330,49 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginRight: 12,
   },
-  emoji: {
-    fontSize: 26,
-    marginBottom: 6,
-  },
   title: {
-    fontSize: 24,
+    flex: 1,
+    fontSize: 22,
     fontWeight: '700',
-    marginBottom: 4,
   },
   subtitle: {
     fontSize: 12,
   },
   buttonRow: {
     flexDirection: 'row',
-    gap: 10,
-    marginTop: 20,
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    gap: 14,
+    flexShrink: 0,
   },
-  primaryButton: {
-    flex: 1,
-    minHeight: 46,
-    borderRadius: 16,
+  playAllButton: {
+    minHeight: 28,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
+    justifyContent: 'flex-start',
+    gap: 6,
   },
-  secondaryButton: {
-    flex: 1,
-    minHeight: 46,
-    borderRadius: 16,
-    flexDirection: 'row',
+  playAllIconWrap: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
   },
-  primaryButtonText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '700',
+  shuffleButton: {
+    minHeight: 28,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    gap: 6,
   },
-  secondaryButtonText: {
-    fontSize: 14,
-    fontWeight: '700',
+  playAllText: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  shuffleButtonText: {
+    fontSize: 13,
+    fontWeight: '600',
   },
   listContent: {
     paddingHorizontal: 16,
