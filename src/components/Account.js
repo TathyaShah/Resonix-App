@@ -264,7 +264,9 @@ const Account = () => {
         });
 
         notify(
-          `Mood categorization finished: ${result.categorizedCount} songs updated.`,
+          result.restoredFromMemo
+            ? 'Mood categorization restored from saved results.'
+            : `Mood categorization finished: ${result.categorizedCount} songs updated.`,
         );
       } catch (error) {
         console.error('Failed to auto-categorize moods', error);

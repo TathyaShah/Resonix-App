@@ -9,6 +9,7 @@ export const AUTO_MOOD_CATEGORIZATION_STORAGE_KEY =
   'autoMoodCategorizationEnabled';
 
 const ONLINE_MOOD_CACHE_STORAGE_KEY = 'onlineMoodCategorizationCache';
+const LIBRARY_MOOD_MEMO_STORAGE_KEY = 'libraryMoodCategorizationMemo';
 const ITUNES_SEARCH_URL = 'https://itunes.apple.com/search';
 const CACHE_TTL_MS = 1000 * 60 * 60 * 24 * 30;
 const ITUNES_REQUEST_DELAY_MS = 3100;
@@ -115,6 +116,56 @@ const safeParse = value => {
 };
 
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+const createHash = value => {
+  let hash = 5381;
+
+  for (let index = 0; index < value.length; index += 1) {
+    hash = (hash * 33) ^ value.charCodeAt(index);
+  }
+
+  return (hash >>> 0).toString(36);
+};
+
+const getLibraryFingerprint = songs => {
+  const normalizedSongs = (songs || [])
+    .map(song => {
+      const songKey = getSongMoodKey(song);
+      return [
+        songKey,
+        normalizeText(getSongTitle(song)),
+        normalizeText(getSongArtist(song)),
+        normalizeText(song?.album),
+        song?.duration || '',
+      ].join('|');
+    })
+    .sort()
+    .join('::');
+
+  return createHash(normalizedSongs);
+};
+
+const getMemoizedAssignments = (memo, fingerprint) => {
+  if (memo?.fingerprint !== fingerprint) {
+    return null;
+  }
+
+  return memo.assignments && typeof memo.assignments === 'object'
+    ? memo.assignments
+    : null;
+};
+
+const getLibraryAssignmentSnapshot = (songs, assignments) =>
+  (songs || []).reduce((snapshot, song) => {
+    const songKey = getSongMoodKey(song);
+    const moodKeys = assignments?.[songKey];
+
+    if (songKey && Array.isArray(moodKeys) && moodKeys.length) {
+      snapshot[songKey] = moodKeys;
+    }
+
+    return snapshot;
+  }, {});
 
 const getCachedMood = (cache, cacheKey) => {
   const cached = cache?.[cacheKey];
@@ -230,11 +281,50 @@ export const autoCategorizeSongMoods = async (
 ) => {
   const safeSongs = Array.isArray(songs) ? songs : [];
   const assignments = await getSongMoodAssignments();
-  const storedCache = await AsyncStorage.getItem(ONLINE_MOOD_CACHE_STORAGE_KEY);
+  const [storedCache, storedMemo] = await Promise.all([
+    AsyncStorage.getItem(ONLINE_MOOD_CACHE_STORAGE_KEY),
+    AsyncStorage.getItem(LIBRARY_MOOD_MEMO_STORAGE_KEY),
+  ]);
   const cache = safeParse(storedCache);
+  const memo = safeParse(storedMemo);
+  const libraryFingerprint = getLibraryFingerprint(safeSongs);
+  const memoizedAssignments = getMemoizedAssignments(memo, libraryFingerprint);
   let categorizedCount = 0;
   let skippedCount = 0;
   let failedCount = 0;
+
+  if (memoizedAssignments) {
+    Object.entries(memoizedAssignments).forEach(([songKey, moodKeys]) => {
+      if (
+        Array.isArray(moodKeys) &&
+        moodKeys.length &&
+        (overwriteExisting ||
+          !Array.isArray(assignments[songKey]) ||
+          !assignments[songKey].length)
+      ) {
+        assignments[songKey] = moodKeys;
+        categorizedCount += 1;
+      }
+    });
+
+    await saveSongMoodAssignments(assignments);
+    onProgress?.({
+      current: safeSongs.length,
+      total: safeSongs.length,
+      categorizedCount,
+      skippedCount,
+      failedCount,
+      restoredFromMemo: true,
+    });
+
+    return {
+      assignments,
+      categorizedCount,
+      skippedCount,
+      failedCount,
+      restoredFromMemo: true,
+    };
+  }
 
   for (let index = 0; index < safeSongs.length; index += 1) {
     const song = safeSongs[index];
@@ -293,6 +383,14 @@ export const autoCategorizeSongMoods = async (
   await Promise.all([
     saveSongMoodAssignments(assignments),
     AsyncStorage.setItem(ONLINE_MOOD_CACHE_STORAGE_KEY, JSON.stringify(cache)),
+    AsyncStorage.setItem(
+      LIBRARY_MOOD_MEMO_STORAGE_KEY,
+      JSON.stringify({
+        fingerprint: libraryFingerprint,
+        createdAt: Date.now(),
+        assignments: getLibraryAssignmentSnapshot(safeSongs, assignments),
+      }),
+    ),
   ]);
 
   return {
@@ -300,5 +398,6 @@ export const autoCategorizeSongMoods = async (
     categorizedCount,
     skippedCount,
     failedCount,
+    restoredFromMemo: false,
   };
 };

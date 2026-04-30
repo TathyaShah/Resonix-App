@@ -13,6 +13,7 @@ import {
   TouchableWithoutFeedback,
   PanResponder,
   PermissionsAndroid,
+  Platform,
 } from 'react-native';
 import TextTicker from 'react-native-text-ticker';
 import useTheme from '../../hooks/useTheme';
@@ -37,6 +38,7 @@ import {
   selectedSong,
   setIsSongPlaying,
   setFavouritesSongs,
+  setAllSongs,
 } from '../../redux/action';
 import TrackPlayer from 'react-native-track-player';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -47,7 +49,9 @@ import SongThumbnail from '../SongThumbnail';
 import MoodAssignmentModal from '../MoodAssignmentModal';
 import {
   getAssignedMoodsForSong,
+  getSongMoodKey,
   getSongMoodAssignments,
+  saveSongMoodAssignments,
   setSongMoods,
 } from '../../utils/moods';
 import {normalizeTracks} from '../../utils/trackPlayer';
@@ -528,21 +532,103 @@ const All_songs = props => {
     setOpenDeleteSongmodal(true);
     setOptionModalVisible(false);
   };
+
+  const getSongIdentity = song =>
+    song?.url ||
+    song?.path ||
+    song?.id ||
+    `${song?.title || ''}-${song?.artist || ''}`;
+
+  const removeSongFromSavedData = async deletedSong => {
+    const deletedIdentity = getSongIdentity(deletedSong);
+    const isSameSong = item => getSongIdentity(item) === deletedIdentity;
+    const removeFromSongList = list =>
+      Array.isArray(list) ? list.filter(item => !isSameSong(item)) : [];
+
+    const updatedSongs = removeFromSongList(Songs);
+    dispatch(setAllSongs(updatedSongs));
+
+    if (selectedItem && isSameSong(selectedItem)) {
+      dispatch(selectedSong(updatedSongs[0] || null));
+      dispatch(setIsSongPlaying(false));
+      await TrackPlayer.reset();
+
+      if (updatedSongs[0]) {
+        await storeSelectedSong(updatedSongs[0]);
+      } else {
+        dispatch(
+          selectedSong({
+            id: null,
+            url: null,
+            path: null,
+            title: '',
+            artist: '',
+            album: '',
+          }),
+        );
+        await AsyncStorage.removeItem('lastPlayedSong');
+      }
+    }
+
+    const [
+      storedFavSongs,
+      storedRecentSongs,
+      storedPlaylists,
+      storedMoodAssignments,
+    ] = await Promise.all([
+      AsyncStorage.getItem('favSongs'),
+      AsyncStorage.getItem('recentSongs'),
+      AsyncStorage.getItem('userPlaylists'),
+      getSongMoodAssignments(),
+    ]);
+
+    const updatedFavSongs = removeFromSongList(
+      storedFavSongs ? JSON.parse(storedFavSongs) : [],
+    );
+    const updatedRecentSongs = removeFromSongList(
+      storedRecentSongs ? JSON.parse(storedRecentSongs) : [],
+    );
+    const playlists = storedPlaylists ? JSON.parse(storedPlaylists) : [];
+    const updatedPlaylists = Array.isArray(playlists)
+      ? playlists.map(playlist => ({
+          ...playlist,
+          songs: removeFromSongList(playlist.songs),
+        }))
+      : [];
+    const updatedMoodAssignments = {...storedMoodAssignments};
+    delete updatedMoodAssignments[getSongMoodKey(deletedSong)];
+    delete updatedMoodAssignments[deletedSong.url];
+    delete updatedMoodAssignments[deletedSong.path];
+    delete updatedMoodAssignments[deletedSong.id];
+    delete updatedMoodAssignments[deletedIdentity];
+
+    await Promise.all([
+      AsyncStorage.setItem('favSongs', JSON.stringify(updatedFavSongs)),
+      AsyncStorage.setItem('recentSongs', JSON.stringify(updatedRecentSongs)),
+      AsyncStorage.setItem('userPlaylists', JSON.stringify(updatedPlaylists)),
+      saveSongMoodAssignments(updatedMoodAssignments),
+    ]);
+
+    dispatch(setFavouritesSongs(updatedFavSongs));
+  };
+
   const deleteSongfromLocal = async () => {
     if (songItem && songItem.url) {
       const filePath = songItem.url;
       console.log('File Path:', filePath);
 
       try {
-        const permission =
-          PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE;
-        const hasPermission = await PermissionsAndroid.check(permission);
+        if (Platform.OS === 'android' && Platform.Version < 33) {
+          const permission =
+            PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE;
+          const hasPermission = await PermissionsAndroid.check(permission);
 
-        if (!hasPermission) {
-          const granted = await PermissionsAndroid.request(permission);
-          if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
-            console.log('Permission denied');
-            return;
+          if (!hasPermission) {
+            const granted = await PermissionsAndroid.request(permission);
+            if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
+              console.log('Permission denied');
+              return;
+            }
           }
         }
 
@@ -551,14 +637,21 @@ const All_songs = props => {
 
         if (fileExists) {
           await RNFS.unlink(filePath);
+          await removeSongFromSavedData(songItem);
           console.log('File deleted successfully');
           ToastAndroid.show('Song Deleted', ToastAndroid.SHORT);
           setOpenDeleteSongmodal(false);
+          setSongItem(null);
         } else {
           console.log('File does not exist');
+          await removeSongFromSavedData(songItem);
+          ToastAndroid.show('Song removed from library', ToastAndroid.SHORT);
+          setOpenDeleteSongmodal(false);
+          setSongItem(null);
         }
       } catch (error) {
         console.log('Error:', error.message);
+        ToastAndroid.show('Unable to delete song', ToastAndroid.SHORT);
       }
     } else {
       console.log('Invalid file path');
